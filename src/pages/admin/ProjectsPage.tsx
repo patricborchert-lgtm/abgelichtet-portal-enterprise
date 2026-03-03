@@ -1,0 +1,116 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { listAdminProjects } from "@/api/projects";
+import { EmptyState } from "@/components/common/EmptyState";
+import { ErrorState } from "@/components/common/ErrorState";
+import { LoadingTable } from "@/components/common/LoadingTable";
+import { PageHeader } from "@/components/common/PageHeader";
+import { StatusBadge } from "@/components/common/StatusBadge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PAGE_SIZE } from "@/lib/constants";
+import { buildPaginationLabel, compareStrings, formatDate } from "@/lib/utils";
+
+export function ProjectsPage() {
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const projectsQuery = useQuery({ queryKey: ["projects", "admin"], queryFn: listAdminProjects });
+
+  if (projectsQuery.isLoading) {
+    return <LoadingTable />;
+  }
+
+  if (projectsQuery.isError) {
+    return <ErrorState message="Projekte konnten nicht geladen werden." onRetry={() => void projectsQuery.refetch()} />;
+  }
+
+  const filtered = projectsQuery.data
+    .filter((project) => {
+      const haystack = `${project.title} ${project.description ?? ""} ${project.clients?.name ?? ""}`.toLowerCase();
+      return haystack.includes(search.toLowerCase());
+    })
+    .sort((left, right) => compareStrings(left.title, right.title));
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
+  const currentPage = Math.min(page, totalPages);
+  const visibleRows = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        actions={
+          <Button asChild>
+            <Link to="/admin/projects/new">Projekt anlegen</Link>
+          </Button>
+        }
+        description="Projektstatus, Zuordnungen und operative Arbeit ueberblicken."
+        title="Projects"
+      />
+
+      <Card>
+        <CardContent className="space-y-4 p-6">
+          <Input
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(1);
+            }}
+            placeholder="Projekt suchen..."
+            value={search}
+          />
+
+          {visibleRows.length === 0 ? (
+            <EmptyState description="Es wurden keine Projekte gefunden." title="Keine Treffer" />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Titel</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Erstellt</TableHead>
+                  <TableHead className="text-right">Aktion</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {visibleRows.map((project) => (
+                  <TableRow key={project.id}>
+                    <TableCell className="font-medium">{project.title}</TableCell>
+                    <TableCell>{project.clients?.name ?? "Unbekannt"}</TableCell>
+                    <TableCell>
+                      <StatusBadge status={project.status} />
+                    </TableCell>
+                    <TableCell>{formatDate(project.created_at)}</TableCell>
+                    <TableCell className="text-right">
+                      <Button asChild size="sm" variant="outline">
+                        <Link to={`/admin/projects/${project.id}`}>Details</Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">{buildPaginationLabel(currentPage, totalPages)}</p>
+            <div className="flex gap-2">
+              <Button disabled={currentPage === 1} onClick={() => setPage((value) => Math.max(value - 1, 1))} variant="outline">
+                Zurueck
+              </Button>
+              <Button
+                disabled={currentPage >= totalPages}
+                onClick={() => setPage((value) => Math.min(value + 1, totalPages))}
+                variant="outline"
+              >
+                Weiter
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

@@ -1,0 +1,10 @@
+project_id = "tlgdwljkryepgogdtbf"
+
+[functions.invite-user]
+verify_jwt = false
+
+[functions.log-activity]
+verify_jwt = true
+
+[functions.impersonate-client]
+verify_jwt = true
