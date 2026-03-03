@@ -55,19 +55,18 @@ export function SetPasswordPage() {
         throw error;
       }
 
-      // await logActivity({
-        //   action: "password_set",
-        //   entityId: data.user?.id ?? null,
-        //   entityType: "user",
-        //   metadata: {},
-      // });
+      await logActivity({
+          action: "password_set",
+          entityId: data.user?.id ?? null,
+          entityType: "user",
+          metadata: {},
+       });
 
       await supabase.auth.signOut();
       toast.success("Passwort erfolgreich gesetzt.");
       navigate("/login", { replace: true });
     } catch (error) {
-      console.error("PASSWORD ERROR:", error);
-      alert(JSON.stringify(error));
+      toast.error(getErrorMessage(error, "Passwort konnte nicht gesetzt werden."));
     } finally {
       setIsSubmitting(false);
     }
