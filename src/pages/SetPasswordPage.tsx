@@ -1,7 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { logActivity } from "@/api/activity";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,7 +23,12 @@ export function SetPasswordPage() {
         await establishSessionFromUrl();
       } catch (error) {
         logDevError("Invite session bootstrap failed", error);
-        toast.error(getErrorMessage(error, "Invite-Link ist ungueltig oder abgelaufen."));
+        toast.error(
+          getErrorMessage(
+            error,
+            "Invite-Link ist ungueltig oder abgelaufen."
+          )
+        );
       } finally {
         setIsReady(true);
       }
@@ -49,24 +53,19 @@ export function SetPasswordPage() {
     setIsSubmitting(true);
 
     try {
-      const { error, data } = await supabase.auth.updateUser({ password });
+      const { error } = await supabase.auth.updateUser({ password });
 
       if (error) {
         throw error;
       }
 
-      await logActivity({
-          action: "password_set",
-          entityId: data.user?.id ?? null,
-          entityType: "user",
-          metadata: {},
-       });
-
       await supabase.auth.signOut();
       toast.success("Passwort erfolgreich gesetzt.");
       navigate("/login", { replace: true });
     } catch (error) {
-      toast.error(getErrorMessage(error, "Passwort konnte nicht gesetzt werden."));
+      toast.error(
+        getErrorMessage(error, "Passwort konnte nicht gesetzt werden.")
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -85,7 +84,9 @@ export function SetPasswordPage() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Passwort setzen</CardTitle>
-          <CardDescription>Aktivieren Sie jetzt Ihren Portal-Zugang.</CardDescription>
+          <CardDescription>
+            Aktivieren Sie jetzt Ihren Portal-Zugang.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={handleSubmit}>
@@ -93,23 +94,33 @@ export function SetPasswordPage() {
               <Label htmlFor="password">Neues Passwort</Label>
               <Input
                 id="password"
-                onChange={(event) => setPassword(event.target.value)}
-                required
                 type="password"
                 value={password}
+                required
+                onChange={(event) => setPassword(event.target.value)}
               />
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="confirm-password">Passwort bestaetigen</Label>
+              <Label htmlFor="confirm-password">
+                Passwort bestaetigen
+              </Label>
               <Input
                 id="confirm-password"
-                onChange={(event) => setConfirmPassword(event.target.value)}
-                required
                 type="password"
                 value={confirmPassword}
+                required
+                onChange={(event) =>
+                  setConfirmPassword(event.target.value)
+                }
               />
             </div>
-            <Button className="w-full" disabled={isSubmitting} type="submit">
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? "Speichere..." : "Passwort speichern"}
             </Button>
           </form>
