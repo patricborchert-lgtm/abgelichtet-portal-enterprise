@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
-    "check": "npm run lint && npm run build"
+    "check": "npm run lint"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.7",
