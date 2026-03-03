@@ -8,21 +8,21 @@ interface StatusBadgeProps {
 
 export function StatusBadge({ active, status }: StatusBadgeProps) {
   if (typeof active === "boolean") {
-    return <Badge variant={active ? "success" : "destructive"}>{active ? "Active" : "Inactive"}</Badge>;
+    return <Badge variant={active ? "success" : "destructive"}>{active ? "Aktiv" : "Inaktiv"}</Badge>;
   }
 
   switch (status) {
     case "planned":
-      return <Badge variant="outline">Planned</Badge>;
+      return <Badge variant="outline">Planung</Badge>;
     case "active":
-      return <Badge variant="default">Active</Badge>;
+      return <Badge variant="default">In Arbeit</Badge>;
     case "review":
-      return <Badge variant="secondary">Review</Badge>;
+      return <Badge variant="secondary">Feedback benötigt</Badge>;
     case "delivered":
-      return <Badge variant="success">Delivered</Badge>;
+      return <Badge variant="success">Abgenommen</Badge>;
     case "archived":
-      return <Badge variant="destructive">Archived</Badge>;
+      return <Badge variant="destructive">Archiviert</Badge>;
     default:
-      return <Badge variant="outline">Unknown</Badge>;
+      return <Badge variant="outline">Unbekannt</Badge>;
   }
 }

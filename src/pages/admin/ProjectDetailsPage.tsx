@@ -31,6 +31,23 @@ import { getErrorMessage } from "@/lib/errors";
 import { formatBytes, formatDate } from "@/lib/utils";
 import type { ProjectFormValues, ProjectFile } from "@/types/app";
 
+function getProgressFromStatus(status: string): number {
+  switch (status) {
+    case "planned":
+      return 20;
+    case "active":
+      return 55;
+    case "review":
+      return 80;
+    case "delivered":
+      return 100;
+    case "archived":
+      return 100;
+    default:
+      return 0;
+  }
+}
+
 export function ProjectDetailsPage() {
   const params = useParams();
   const projectId = params.id ?? "";
@@ -83,6 +100,7 @@ export function ProjectDetailsPage() {
   const project = projectQuery.data.project;
   const files = filesQuery.data ?? [];
   const clientOptions = clientOptionsQuery.data ?? [];
+  const progress = getProgressFromStatus(project.status);
 
   async function handleSave(values: ProjectFormValues) {
     try {
@@ -146,8 +164,71 @@ export function ProjectDetailsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader description="Projektinformationen, Status und Dateien verwalten." title={project.title} />
+    <div className="space-y-8">
+      <div
+        className="overflow-hidden rounded-2xl border border-white/70 bg-white shadow-[0_22px_55px_rgba(15,23,42,0.08)]"
+        style={{ borderRadius: 16 }}
+      >
+        <div
+          className="h-1.5 w-full"
+          style={{ background: "linear-gradient(90deg, #8F87F1 0%, rgba(143,135,241,0.18) 100%)" }}
+        />
+        <div className="grid gap-6 p-6 lg:grid-cols-[1.3fr_0.7fr] lg:p-8">
+          <div className="space-y-5">
+            <div className="space-y-3">
+              <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-400">Projektübersicht</p>
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div className="space-y-2">
+                  <h1 className="text-3xl font-semibold tracking-tight text-slate-950">{project.title}</h1>
+                  <p className="text-sm text-slate-500">
+                    {project.clients?.name ?? "Kein Client zugewiesen"} · Erstellt am {formatDate(project.created_at)}
+                  </p>
+                </div>
+                <StatusBadge status={project.status} />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium text-slate-500">Fortschritt</span>
+                <span className="font-medium text-slate-700">{progress}%</span>
+              </div>
+              <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    background: "linear-gradient(90deg, #8F87F1 0%, #B7B1FF 100%)",
+                    width: `${progress}%`,
+                  }}
+                />
+              </div>
+            </div>
+
+            <p className="max-w-3xl text-sm leading-6 text-slate-600">
+              {project.description || "Für dieses Projekt ist aktuell noch keine Beschreibung hinterlegt."}
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+            <div className="rounded-2xl border border-slate-200/80 bg-[linear-gradient(180deg,rgba(143,135,241,0.06)_0%,rgba(255,255,255,1)_45%)] p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Client</p>
+              <p className="mt-2 text-sm font-medium text-slate-900">{project.clients?.name ?? "Unbekannt"}</p>
+              <p className="mt-1 text-sm text-slate-500">{project.clients?.email ?? "Keine E-Mail vorhanden"}</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200/80 bg-[linear-gradient(180deg,rgba(143,135,241,0.06)_0%,rgba(255,255,255,1)_45%)] p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Status</p>
+              <div className="mt-2">
+                <StatusBadge status={project.status} />
+              </div>
+            </div>
+            <div className="rounded-2xl border border-slate-200/80 bg-[linear-gradient(180deg,rgba(143,135,241,0.06)_0%,rgba(255,255,255,1)_45%)] p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Dateien</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-950">{files.length}</p>
+              <p className="mt-1 text-sm text-slate-500">Im Projekt hinterlegt</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         {isAdmin ? (
@@ -164,16 +245,19 @@ export function ProjectDetailsPage() {
             submitLabel="Projekt speichern"
           />
         ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>Projektinformationen</CardTitle>
+          <Card
+            className="border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
+            style={{ borderRadius: 16 }}
+          >
+            <CardHeader className="pb-3">
+              <CardTitle className="text-2xl text-slate-950">Projektinformationen</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between rounded-xl border p-4">
-                <span className="text-sm font-medium">Status</span>
+              <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4">
+                <span className="text-sm font-medium text-slate-600">Status</span>
                 <StatusBadge status={project.status} />
               </div>
-              <div className="space-y-2 text-sm text-muted-foreground">
+              <div className="space-y-2 text-sm leading-6 text-slate-600">
                 <p>Client: {project.clients?.name}</p>
                 <p>Erstellt: {formatDate(project.created_at)}</p>
                 <p>{project.description || "Keine Beschreibung hinterlegt."}</p>
@@ -182,17 +266,20 @@ export function ProjectDetailsPage() {
           </Card>
         )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Projekt Snapshot</CardTitle>
-            <CardDescription>Wichtige Eckdaten fuer schnelle Einordnung.</CardDescription>
+        <Card
+          className="border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
+          style={{ borderRadius: 16 }}
+        >
+          <CardHeader className="pb-3">
+            <CardTitle className="text-2xl text-slate-950">Projekt Snapshot</CardTitle>
+            <CardDescription>Wichtige Eckdaten für eine schnelle Einordnung.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between rounded-xl border p-4">
-              <span className="text-sm font-medium">Status</span>
+            <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4">
+              <span className="text-sm font-medium text-slate-600">Status</span>
               <StatusBadge status={project.status} />
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="rounded-2xl border border-slate-200/80 bg-[linear-gradient(180deg,rgba(143,135,241,0.05)_0%,rgba(255,255,255,1)_45%)] p-4 text-sm text-slate-600">
               <p>Client: {project.clients?.name ?? "Unbekannt"}</p>
               <p>E-Mail: {project.clients?.email ?? "—"}</p>
               <p>Erstellt: {formatDate(project.created_at)}</p>
@@ -203,9 +290,12 @@ export function ProjectDetailsPage() {
 
       {isAdmin ? <FileUploadCard onUpload={handleUpload} /> : null}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Dateien</CardTitle>
+      <Card
+        className="border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
+        style={{ borderRadius: 16 }}
+      >
+        <CardHeader className="pb-3">
+          <CardTitle className="text-2xl text-slate-950">Dateien</CardTitle>
         </CardHeader>
         <CardContent>
           {files.length === 0 ? (

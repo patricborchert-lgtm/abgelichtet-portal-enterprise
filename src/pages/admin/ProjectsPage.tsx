@@ -39,10 +39,10 @@ export function ProjectsPage() {
   const visibleRows = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         actions={
-          <Button asChild>
+          <Button asChild className="bg-[#8F87F1] text-white hover:bg-[#7c74e2]">
             <Link to="/admin/projects/new">Projekt anlegen</Link>
           </Button>
         }
@@ -50,9 +50,21 @@ export function ProjectsPage() {
         title="Projects"
       />
 
-      <Card>
+      <Card
+        className="overflow-hidden border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
+        style={{ borderRadius: 16 }}
+      >
+        <div
+          className="h-1.5 w-full"
+          style={{ background: "linear-gradient(90deg, #8F87F1 0%, rgba(143,135,241,0.18) 100%)" }}
+        />
         <CardContent className="space-y-4 p-6">
+          <div className="space-y-1">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-400">Übersicht</p>
+            <p className="text-sm text-slate-500">Verfolge Status, Client-Zuordnung und Einstieg in jedes Projekt.</p>
+          </div>
           <Input
+            className="border-slate-200 bg-slate-50/70"
             onChange={(event) => {
               setSearch(event.target.value);
               setPage(1);
@@ -64,43 +76,51 @@ export function ProjectsPage() {
           {visibleRows.length === 0 ? (
             <EmptyState description="Es wurden keine Projekte gefunden." title="Keine Treffer" />
           ) : (
-            <Table>
+            <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
+              <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Titel</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Erstellt</TableHead>
+                <TableRow className="bg-slate-50/80 hover:bg-slate-50/80">
+                  <TableHead className="text-slate-500">Titel</TableHead>
+                  <TableHead className="text-slate-500">Client</TableHead>
+                  <TableHead className="text-slate-500">Status</TableHead>
+                  <TableHead className="text-slate-500">Erstellt</TableHead>
                   <TableHead className="text-right">Aktion</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {visibleRows.map((project) => (
-                  <TableRow key={project.id}>
-                    <TableCell className="font-medium">{project.title}</TableCell>
-                    <TableCell>{project.clients?.name ?? "Unbekannt"}</TableCell>
+                  <TableRow className="hover:bg-[#8F87F1]/[0.04]" key={project.id}>
+                    <TableCell className="font-medium text-slate-900">{project.title}</TableCell>
+                    <TableCell className="text-slate-600">{project.clients?.name ?? "Unbekannt"}</TableCell>
                     <TableCell>
                       <StatusBadge status={project.status} />
                     </TableCell>
-                    <TableCell>{formatDate(project.created_at)}</TableCell>
+                    <TableCell className="text-slate-500">{formatDate(project.created_at)}</TableCell>
                     <TableCell className="text-right">
-                      <Button asChild size="sm" variant="outline">
+                      <Button asChild className="border-[#8F87F1]/20 text-[#6E65D8] hover:bg-[#8F87F1]/10" size="sm" variant="outline">
                         <Link to={`/admin/projects/${project.id}`}>Details</Link>
                       </Button>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
+              </Table>
+            </div>
           )}
 
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">{buildPaginationLabel(currentPage, totalPages)}</p>
+            <p className="text-sm text-slate-500">{buildPaginationLabel(currentPage, totalPages)}</p>
             <div className="flex gap-2">
-              <Button disabled={currentPage === 1} onClick={() => setPage((value) => Math.max(value - 1, 1))} variant="outline">
-                Zurueck
+              <Button
+                className="border-slate-200 bg-white hover:bg-slate-50"
+                disabled={currentPage === 1}
+                onClick={() => setPage((value) => Math.max(value - 1, 1))}
+                variant="outline"
+              >
+                Zurück
               </Button>
               <Button
+                className="border-slate-200 bg-white hover:bg-slate-50"
                 disabled={currentPage >= totalPages}
                 onClick={() => setPage((value) => Math.min(value + 1, totalPages))}
                 variant="outline"

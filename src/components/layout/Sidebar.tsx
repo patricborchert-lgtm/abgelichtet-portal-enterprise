@@ -26,15 +26,15 @@ export function Sidebar() {
   const items = isAdmin ? adminNavigation : clientNavigation;
 
   return (
-    <aside className="border-r border-slate-200 bg-slate-950 text-slate-100 lg:sticky lg:top-0 lg:h-screen">
+    <aside className="border-r border-white/50 bg-[linear-gradient(180deg,#ffffff_0%,#f6f4ff_100%)] text-slate-800 lg:sticky lg:top-0 lg:h-screen">
       <div className="flex h-full flex-col">
-        <div className="space-y-3 border-b border-slate-800 px-6 py-8">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-400 text-slate-950">
+        <div className="space-y-3 border-b border-slate-200 px-6 py-8">
+          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#8F87F1]/15 text-[#6E65D8]">
             <Shield className="h-6 w-6" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold tracking-tight">abgelichtet Portal</h2>
-            <p className="text-sm text-slate-400">{profile ? ROLE_LABELS[profile.role] : "Portal"}</p>
+            <h2 className="text-lg font-semibold tracking-tight text-slate-950">abgelichtet Portal</h2>
+            <p className="text-sm text-slate-500">{profile ? ROLE_LABELS[profile.role] : "Portal"}</p>
           </div>
         </div>
         <nav className="flex-1 space-y-2 px-4 py-6">
@@ -44,8 +44,10 @@ export function Sidebar() {
               to={item.to}
               className={({ isActive }) =>
                 cn(
-                  "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition",
-                  isActive ? "bg-slate-100 text-slate-950" : "text-slate-300 hover:bg-slate-900 hover:text-white",
+                  "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition",
+                  isActive
+                    ? "bg-[#8F87F1]/12 text-[#6E65D8] shadow-[0_10px_24px_rgba(143,135,241,0.10)]"
+                    : "text-slate-600 hover:bg-white hover:text-slate-950",
                 )
               }
             >

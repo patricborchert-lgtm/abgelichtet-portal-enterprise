@@ -34,15 +34,26 @@ export function ClientForm({ defaultValues, isSubmitting = false, onSubmit, subm
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Client-Daten</CardTitle>
+    <Card
+      className="overflow-hidden border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
+      style={{ borderRadius: 16 }}
+    >
+      <div
+        className="h-1.5 w-full"
+        style={{ background: "linear-gradient(90deg, #8F87F1 0%, rgba(143,135,241,0.18) 100%)" }}
+      />
+      <CardHeader className="pb-3">
+        <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-400">Verwaltung</p>
+        <CardTitle className="text-2xl text-slate-950">Client-Daten</CardTitle>
       </CardHeader>
       <CardContent>
-        <form className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
+        <form className="grid gap-5 md:grid-cols-2" onSubmit={handleSubmit}>
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
+            <Label className="text-slate-700" htmlFor="name">
+              Name
+            </Label>
             <Input
+              className="border-slate-200 bg-slate-50/70"
               id="name"
               onChange={(event) => updateValue("name", event.target.value)}
               required
@@ -50,8 +61,11 @@ export function ClientForm({ defaultValues, isSubmitting = false, onSubmit, subm
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">E-Mail</Label>
+            <Label className="text-slate-700" htmlFor="email">
+              E-Mail
+            </Label>
             <Input
+              className="border-slate-200 bg-slate-50/70"
               id="email"
               onChange={(event) => updateValue("email", event.target.value)}
               required
@@ -60,19 +74,44 @@ export function ClientForm({ defaultValues, isSubmitting = false, onSubmit, subm
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="company">Firma</Label>
-            <Input id="company" onChange={(event) => updateValue("company", event.target.value)} value={values.company} />
+            <Label className="text-slate-700" htmlFor="company">
+              Firma
+            </Label>
+            <Input
+              className="border-slate-200 bg-slate-50/70"
+              id="company"
+              onChange={(event) => updateValue("company", event.target.value)}
+              value={values.company}
+            />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="phone">Telefon</Label>
-            <Input id="phone" onChange={(event) => updateValue("phone", event.target.value)} value={values.phone} />
+            <Label className="text-slate-700" htmlFor="phone">
+              Telefon
+            </Label>
+            <Input
+              className="border-slate-200 bg-slate-50/70"
+              id="phone"
+              onChange={(event) => updateValue("phone", event.target.value)}
+              value={values.phone}
+            />
           </div>
           <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="notes">Notizen</Label>
-            <Textarea id="notes" onChange={(event) => updateValue("notes", event.target.value)} value={values.notes} />
+            <Label className="text-slate-700" htmlFor="notes">
+              Notizen
+            </Label>
+            <Textarea
+              className="border-slate-200 bg-slate-50/70"
+              id="notes"
+              onChange={(event) => updateValue("notes", event.target.value)}
+              value={values.notes}
+            />
           </div>
-          <div className="md:col-span-2">
-            <Button disabled={isSubmitting} type="submit">
+          <div className="md:col-span-2 pt-2">
+            <Button
+              className="min-w-[220px] bg-[#8F87F1] text-white hover:bg-[#7c74e2]"
+              disabled={isSubmitting}
+              type="submit"
+            >
               {submitLabel}
             </Button>
           </div>

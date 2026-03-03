@@ -42,15 +42,26 @@ export function ProjectForm({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Projekt</CardTitle>
+    <Card
+      className="overflow-hidden border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
+      style={{ borderRadius: 16 }}
+    >
+      <div
+        className="h-1.5 w-full"
+        style={{ background: "linear-gradient(90deg, #8F87F1 0%, rgba(143,135,241,0.18) 100%)" }}
+      />
+      <CardHeader className="pb-3">
+        <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-400">Verwaltung</p>
+        <CardTitle className="text-2xl text-slate-950">Projekt</CardTitle>
       </CardHeader>
       <CardContent>
-        <form className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
+        <form className="grid gap-5 md:grid-cols-2" onSubmit={handleSubmit}>
           <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="title">Titel</Label>
+            <Label className="text-slate-700" htmlFor="title">
+              Titel
+            </Label>
             <Input
+              className="border-slate-200 bg-slate-50/70"
               id="title"
               onChange={(event) => updateValue("title", event.target.value)}
               required
@@ -58,9 +69,9 @@ export function ProjectForm({
             />
           </div>
           <div className="space-y-2">
-            <Label>Client</Label>
+            <Label className="text-slate-700">Client</Label>
             <Select onValueChange={(value) => updateValue("clientId", value)} value={values.clientId}>
-              <SelectTrigger>
+              <SelectTrigger className="border-slate-200 bg-slate-50/70">
                 <SelectValue placeholder="Client waehlen" />
               </SelectTrigger>
               <SelectContent>
@@ -73,9 +84,9 @@ export function ProjectForm({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Status</Label>
+            <Label className="text-slate-700">Status</Label>
             <Select onValueChange={(value) => updateValue("status", value as ProjectFormValues["status"])} value={values.status}>
-              <SelectTrigger>
+              <SelectTrigger className="border-slate-200 bg-slate-50/70">
                 <SelectValue placeholder="Status waehlen" />
               </SelectTrigger>
               <SelectContent>
@@ -88,15 +99,22 @@ export function ProjectForm({
             </Select>
           </div>
           <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="description">Beschreibung</Label>
+            <Label className="text-slate-700" htmlFor="description">
+              Beschreibung
+            </Label>
             <Textarea
+              className="border-slate-200 bg-slate-50/70"
               id="description"
               onChange={(event) => updateValue("description", event.target.value)}
               value={values.description}
             />
           </div>
-          <div className="md:col-span-2">
-            <Button disabled={isSubmitting} type="submit">
+          <div className="md:col-span-2 pt-2">
+            <Button
+              className="min-w-[220px] bg-[#8F87F1] text-white hover:bg-[#7c74e2]"
+              disabled={isSubmitting}
+              type="submit"
+            >
               {submitLabel}
             </Button>
           </div>
