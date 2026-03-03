@@ -70,6 +70,41 @@ export interface Database {
           severity?: "info" | "warning" | "critical";
         };
       };
+      approvals: {
+        Row: {
+          created_at: string;
+          decided_at: string | null;
+          id: string;
+          project_id: string;
+          request_message: string | null;
+          requested_by: string | null;
+          response_comment: string | null;
+          reviewed_by: string | null;
+          status: "pending" | "approved" | "changes_requested";
+        };
+        Insert: {
+          created_at?: string;
+          decided_at?: string | null;
+          id?: string;
+          project_id: string;
+          request_message?: string | null;
+          requested_by?: string | null;
+          response_comment?: string | null;
+          reviewed_by?: string | null;
+          status?: "pending" | "approved" | "changes_requested";
+        };
+        Update: {
+          created_at?: string;
+          decided_at?: string | null;
+          id?: string;
+          project_id?: string;
+          request_message?: string | null;
+          requested_by?: string | null;
+          response_comment?: string | null;
+          reviewed_by?: string | null;
+          status?: "pending" | "approved" | "changes_requested";
+        };
+      };
       clients: {
         Row: {
           company: string | null;
@@ -157,6 +192,35 @@ export interface Database {
           uploaded_by?: string | null;
         };
       };
+      milestones: {
+        Row: {
+          created_at: string;
+          description: string | null;
+          id: string;
+          project_id: string;
+          sort_order: number;
+          status: "pending" | "in_progress" | "completed";
+          title: string;
+        };
+        Insert: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          project_id: string;
+          sort_order?: number;
+          status?: "pending" | "in_progress" | "completed";
+          title: string;
+        };
+        Update: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          project_id?: string;
+          sort_order?: number;
+          status?: "pending" | "in_progress" | "completed";
+          title?: string;
+        };
+      };
       projects: {
         Row: {
           client_id: string;
@@ -183,6 +247,38 @@ export interface Database {
           title?: string;
         };
       };
+      timeline_events: {
+        Row: {
+          author_id: string | null;
+          author_label: string;
+          created_at: string;
+          event_type: "comment" | "update" | "approval_requested" | "approved" | "changes_requested" | "milestone";
+          id: string;
+          message: string;
+          metadata: Json;
+          project_id: string;
+        };
+        Insert: {
+          author_id?: string | null;
+          author_label: string;
+          created_at?: string;
+          event_type: "comment" | "update" | "approval_requested" | "approved" | "changes_requested" | "milestone";
+          id?: string;
+          message: string;
+          metadata?: Json;
+          project_id: string;
+        };
+        Update: {
+          author_id?: string | null;
+          author_label?: string;
+          created_at?: string;
+          event_type?: "comment" | "update" | "approval_requested" | "approved" | "changes_requested" | "milestone";
+          id?: string;
+          message?: string;
+          metadata?: Json;
+          project_id?: string;
+        };
+      };
     };
     Functions: {
       is_admin: {
@@ -192,6 +288,14 @@ export interface Database {
       my_client_id: {
         Args: Record<string, never>;
         Returns: string | null;
+      };
+      respond_to_project_approval: {
+        Args: {
+          p_approval_id: string;
+          p_response_comment?: string | null;
+          p_status: "approved" | "changes_requested";
+        };
+        Returns: undefined;
       };
     };
   };

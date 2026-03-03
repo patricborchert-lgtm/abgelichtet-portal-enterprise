@@ -1,37 +1,46 @@
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, Trash2 } from "lucide-react";
-import { useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { deleteProjectFile, getProjectFileDownloadUrl, listProjectFiles, uploadProjectFile } from "@/api/files";
 import { logActivity } from "@/api/activity";
+import { deleteProjectFile, getProjectFileDownloadUrl, listProjectFiles, uploadProjectFile } from "@/api/files";
 import { getProjectDetails, listClientOptions, updateProject } from "@/api/projects";
-import { EmptyState } from "@/components/common/EmptyState";
+import {
+  createProjectMilestone,
+  createProjectTimelineEvent,
+  decideProjectApproval,
+  listProjectApprovals,
+  listProjectMilestones,
+  listProjectTimeline,
+  requestProjectApproval,
+  updateProjectMilestone,
+} from "@/api/project-workspace";
 import { ErrorState } from "@/components/common/ErrorState";
 import { LoadingTable } from "@/components/common/LoadingTable";
-import { PageHeader } from "@/components/common/PageHeader";
 import { StatusBadge } from "@/components/common/StatusBadge";
-import {
-  AlertDialog,
-  AlertDialogActionButton,
-  AlertDialogCancelButton,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileUploadCard } from "@/components/files/FileUploadCard";
-import { ProjectForm } from "@/components/projects/ProjectForm";
+import { ProjectApprovalsTab } from "@/components/projects/ProjectApprovalsTab";
+import { ProjectMilestonesTab } from "@/components/projects/ProjectMilestonesTab";
+import { ProjectOverviewTab } from "@/components/projects/ProjectOverviewTab";
+import { ProjectTabs } from "@/components/projects/ProjectTabs";
+import { ProjectTimelineTab } from "@/components/projects/ProjectTimelineTab";
 import { useAuth } from "@/hooks/useAuth";
 import { getErrorMessage } from "@/lib/errors";
-import { formatBytes, formatDate } from "@/lib/utils";
-import type { ActivityPayload, ProjectFormValues, ProjectFile } from "@/types/app";
+import { formatDate } from "@/lib/utils";
+import type {
+  ActivityPayload,
+  ApprovalDecisionValues,
+  Milestone,
+  MilestoneFormValues,
+  MilestoneStatus,
+  ProjectFile,
+  ProjectFormValues,
+  ProjectStatus,
+  TimelineEventFormValues,
+} from "@/types/app";
+import { useParams } from "react-router-dom";
 
-function getProgressFromStatus(status: string): number {
+type ProjectDetailTab = "overview" | "timeline" | "milestones" | "approvals";
+
+function getProgressFromStatus(status: ProjectStatus): number {
   switch (status) {
     case "planned":
       return 20;
@@ -51,7 +60,8 @@ function getProgressFromStatus(status: string): number {
 export function ProjectDetailsPage() {
   const params = useParams();
   const projectId = params.id ?? "";
-  const { isAdmin, user } = useAuth();
+  const [activeTab, setActiveTab] = useState<ProjectDetailTab>("overview");
+  const { isAdmin, isClient, profile, user } = useAuth();
   const queryClient = useQueryClient();
 
   const projectQuery = useQuery({
@@ -66,6 +76,30 @@ export function ProjectDetailsPage() {
     queryKey: ["project-files", projectId],
   });
 
+  const timelineQuery = useQuery({
+    enabled: Boolean(projectId),
+    queryFn: () => listProjectTimeline(projectId),
+    queryKey: ["project-timeline", projectId],
+  });
+
+  const milestonesQuery = useQuery({
+    enabled: Boolean(projectId),
+    queryFn: () => listProjectMilestones(projectId),
+    queryKey: ["project-milestones", projectId],
+  });
+
+  const approvalsQuery = useQuery({
+    enabled: Boolean(projectId),
+    queryFn: () => listProjectApprovals(projectId),
+    queryKey: ["project-approvals", projectId],
+  });
+
+  const clientOptionsQuery = useQuery({
+    enabled: isAdmin,
+    queryFn: listClientOptions,
+    queryKey: ["client-options"],
+  });
+
   function logActivitySafely(payload: ActivityPayload): void {
     void (async () => {
       try {
@@ -76,11 +110,13 @@ export function ProjectDetailsPage() {
     })();
   }
 
-  const clientOptionsQuery = useQuery({
-    enabled: isAdmin,
-    queryFn: listClientOptions,
-    queryKey: ["client-options"],
-  });
+  function getAuthorLabel(): string {
+    if (profile?.role === "admin") {
+      return "Admin";
+    }
+
+    return projectQuery.data?.project.clients?.name ?? "Kunde";
+  }
 
   const updateMutation = useMutation({
     mutationFn: (values: ProjectFormValues) => updateProject(projectId, values),
@@ -99,16 +135,134 @@ export function ProjectDetailsPage() {
     },
   });
 
-  if (projectQuery.isLoading || filesQuery.isLoading || (isAdmin && clientOptionsQuery.isLoading)) {
+  const timelineMutation = useMutation({
+    mutationFn: (values: TimelineEventFormValues) => {
+      if (!user) {
+        throw new Error("Keine aktive Session.");
+      }
+
+      return createProjectTimelineEvent(projectId, user.id, values);
+    },
+    onSuccess: async (event) => {
+      logActivitySafely({
+        action: "timeline_event_created",
+        entityId: event.id,
+        entityType: "timeline_event",
+        metadata: {
+          event_type: event.event_type,
+          project_id: projectId,
+        },
+      });
+      await queryClient.invalidateQueries({ queryKey: ["project-timeline", projectId] });
+      toast.success("Update gepostet.");
+    },
+  });
+
+  const createMilestoneMutation = useMutation({
+    mutationFn: (values: MilestoneFormValues) => createProjectMilestone(projectId, values),
+    onSuccess: async (milestone) => {
+      logActivitySafely({
+        action: "milestone_created",
+        entityId: milestone.id,
+        entityType: "milestone",
+        metadata: {
+          project_id: projectId,
+          title: milestone.title,
+        },
+      });
+      await queryClient.invalidateQueries({ queryKey: ["project-milestones", projectId] });
+      toast.success("Meilenstein gespeichert.");
+    },
+  });
+
+  const updateMilestoneMutation = useMutation({
+    mutationFn: ({ milestone, status }: { milestone: Milestone; status: MilestoneStatus }) =>
+      updateProjectMilestone(milestone.id, { status }),
+    onSuccess: async (milestone) => {
+      logActivitySafely({
+        action: "milestone_updated",
+        entityId: milestone.id,
+        entityType: "milestone",
+        metadata: {
+          project_id: projectId,
+          status: milestone.status,
+        },
+      });
+      await queryClient.invalidateQueries({ queryKey: ["project-milestones", projectId] });
+      toast.success("Meilenstein aktualisiert.");
+    },
+  });
+
+  const requestApprovalMutation = useMutation({
+    mutationFn: (message: string) => {
+      if (!user) {
+        throw new Error("Keine aktive Session.");
+      }
+
+      return requestProjectApproval(projectId, user.id, message);
+    },
+    onSuccess: async (approval) => {
+      logActivitySafely({
+        action: "approval_requested",
+        entityId: approval.id,
+        entityType: "approval",
+        metadata: {
+          project_id: projectId,
+        },
+      });
+      await queryClient.invalidateQueries({ queryKey: ["project-approvals", projectId] });
+      toast.success("Abnahme angefordert.");
+    },
+  });
+
+  const decideApprovalMutation = useMutation({
+    mutationFn: ({ approvalId, values }: { approvalId: string; values: ApprovalDecisionValues }) =>
+      decideProjectApproval(approvalId, values),
+    onSuccess: async (_, variables) => {
+      logActivitySafely({
+        action: "approval_decided",
+        entityId: variables.approvalId,
+        entityType: "approval",
+        metadata: {
+          decision: variables.values.status,
+          project_id: projectId,
+        },
+      });
+      await queryClient.invalidateQueries({ queryKey: ["project-approvals", projectId] });
+      toast.success(variables.values.status === "approved" ? "Projekt abgenommen." : "Änderungswunsch gespeichert.");
+    },
+  });
+
+  const isLoading =
+    projectQuery.isLoading ||
+    filesQuery.isLoading ||
+    timelineQuery.isLoading ||
+    milestonesQuery.isLoading ||
+    approvalsQuery.isLoading ||
+    (isAdmin && clientOptionsQuery.isLoading);
+
+  if (isLoading) {
     return <LoadingTable />;
   }
 
-  if (projectQuery.isError || filesQuery.isError || (isAdmin && clientOptionsQuery.isError) || !projectQuery.data) {
+  const hasError =
+    projectQuery.isError ||
+    filesQuery.isError ||
+    timelineQuery.isError ||
+    milestonesQuery.isError ||
+    approvalsQuery.isError ||
+    (isAdmin && clientOptionsQuery.isError) ||
+    !projectQuery.data;
+
+  if (hasError) {
     return <ErrorState message="Projekt konnte nicht geladen werden." />;
   }
 
   const project = projectQuery.data.project;
   const files = filesQuery.data ?? [];
+  const timelineEvents = timelineQuery.data ?? [];
+  const milestones = milestonesQuery.data ?? [];
+  const approvals = approvalsQuery.data ?? [];
   const clientOptions = clientOptionsQuery.data ?? [];
   const progress = getProgressFromStatus(project.status);
 
@@ -173,6 +327,105 @@ export function ProjectDetailsPage() {
     }
   }
 
+  async function handleCreateTimeline(message: string) {
+    try {
+      await timelineMutation.mutateAsync({
+        authorLabel: getAuthorLabel(),
+        eventType: "update",
+        message,
+      });
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Timeline-Eintrag konnte nicht erstellt werden."));
+    }
+  }
+
+  async function appendSupportingTimelineEvent(values: TimelineEventFormValues): Promise<void> {
+    if (!user) {
+      return;
+    }
+
+    try {
+      await createProjectTimelineEvent(projectId, user.id, values);
+      await queryClient.invalidateQueries({ queryKey: ["project-timeline", projectId] });
+    } catch {
+      // Timeline support events must not block main actions.
+    }
+  }
+
+  async function handleCreateMilestone(values: MilestoneFormValues) {
+    try {
+      const milestone = await createMilestoneMutation.mutateAsync(values);
+      await appendSupportingTimelineEvent({
+        authorLabel: getAuthorLabel(),
+        eventType: "milestone",
+        message: `Neuer Meilenstein erstellt: ${milestone.title}`,
+      });
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Meilenstein konnte nicht erstellt werden."));
+    }
+  }
+
+  async function handleMilestoneStatusChange(milestone: Milestone, status: MilestoneStatus) {
+    try {
+      await updateMilestoneMutation.mutateAsync({ milestone, status });
+      await appendSupportingTimelineEvent({
+        authorLabel: getAuthorLabel(),
+        eventType: "milestone",
+        message: `Meilenstein „${milestone.title}“ wurde auf „${
+          status === "completed" ? "Abgeschlossen" : status === "in_progress" ? "In Arbeit" : "Geplant"
+        }“ gesetzt.`,
+      });
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Meilenstein konnte nicht aktualisiert werden."));
+    }
+  }
+
+  async function handleRequestApproval(message: string) {
+    try {
+      await requestApprovalMutation.mutateAsync(message);
+      await appendSupportingTimelineEvent({
+        authorLabel: getAuthorLabel(),
+        eventType: "approval_requested",
+        message: message || "Abnahme für dieses Projekt wurde angefragt.",
+      });
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Abnahme konnte nicht angefordert werden."));
+    }
+  }
+
+  async function handleApprovalDecision(values: ApprovalDecisionValues) {
+    const pendingApproval = approvals.find((approval) => approval.status === "pending");
+
+    if (!pendingApproval) {
+      toast.error("Es gibt keine offene Abnahmeanfrage.");
+      return;
+    }
+
+    try {
+      await decideApprovalMutation.mutateAsync({
+        approvalId: pendingApproval.id,
+        values,
+      });
+      await appendSupportingTimelineEvent({
+        authorLabel: getAuthorLabel(),
+        eventType: values.status,
+        message:
+          values.status === "approved"
+            ? values.comment || "Projekt wurde abgenommen."
+            : values.comment,
+      });
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Deine Entscheidung konnte nicht gespeichert werden."));
+    }
+  }
+
+  const tabs = [
+    { key: "overview", label: "Übersicht" },
+    { badge: timelineEvents.length, key: "timeline", label: "Timeline" },
+    { badge: milestones.length, key: "milestones", label: "Meilensteine" },
+    { badge: approvals.length, key: "approvals", label: "Abnahme" },
+  ] satisfies { badge?: number; key: ProjectDetailTab; label: string }[];
+
   return (
     <div className="space-y-8">
       <div
@@ -226,147 +479,66 @@ export function ProjectDetailsPage() {
               <p className="mt-1 text-sm text-slate-500">{project.clients?.email ?? "Keine E-Mail vorhanden"}</p>
             </div>
             <div className="rounded-2xl border border-slate-200/80 bg-[linear-gradient(180deg,rgba(143,135,241,0.06)_0%,rgba(255,255,255,1)_45%)] p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Status</p>
-              <div className="mt-2">
-                <StatusBadge status={project.status} />
-              </div>
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Meilensteine</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-950">{milestones.length}</p>
+              <p className="mt-1 text-sm text-slate-500">Im Projekt hinterlegt</p>
             </div>
             <div className="rounded-2xl border border-slate-200/80 bg-[linear-gradient(180deg,rgba(143,135,241,0.06)_0%,rgba(255,255,255,1)_45%)] p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Dateien</p>
-              <p className="mt-2 text-2xl font-semibold text-slate-950">{files.length}</p>
-              <p className="mt-1 text-sm text-slate-500">Im Projekt hinterlegt</p>
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Abnahme</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-950">
+                {approvals.find((approval) => approval.status === "pending") ? "Offen" : approvals.length > 0 ? "Verlauf" : "Keine"}
+              </p>
+              <p className="mt-1 text-sm text-slate-500">
+                {approvals.length > 0 ? `${approvals.length} Einträge im Verlauf` : "Noch keine Anfrage"}
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-        {isAdmin ? (
-          <ProjectForm
-            clientOptions={clientOptions}
-            defaultValues={{
-              clientId: project.client_id,
-              description: project.description ?? "",
-              status: project.status,
-              title: project.title,
-            }}
-            isSubmitting={updateMutation.isPending}
-            onSubmit={handleSave}
-            submitLabel="Projekt speichern"
-          />
-        ) : (
-          <Card
-            className="border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
-            style={{ borderRadius: 16 }}
-          >
-            <CardHeader className="pb-3">
-              <CardTitle className="text-2xl text-slate-950">Projektinformationen</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4">
-                <span className="text-sm font-medium text-slate-600">Status</span>
-                <StatusBadge status={project.status} />
-              </div>
-              <div className="space-y-2 text-sm leading-6 text-slate-600">
-                <p>Kunde: {project.clients?.name}</p>
-                <p>Erstellt: {formatDate(project.created_at)}</p>
-                <p>{project.description || "Keine Beschreibung hinterlegt."}</p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+      <ProjectTabs activeTab={activeTab} items={tabs} onChange={(key) => setActiveTab(key as ProjectDetailTab)} />
 
-        <Card
-          className="border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
-          style={{ borderRadius: 16 }}
-        >
-          <CardHeader className="pb-3">
-            <CardTitle className="text-2xl text-slate-950">Projekt Snapshot</CardTitle>
-            <CardDescription>Wichtige Eckdaten für eine schnelle Einordnung.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4">
-              <span className="text-sm font-medium text-slate-600">Status</span>
-              <StatusBadge status={project.status} />
-            </div>
-            <div className="rounded-2xl border border-slate-200/80 bg-[linear-gradient(180deg,rgba(143,135,241,0.05)_0%,rgba(255,255,255,1)_45%)] p-4 text-sm text-slate-600">
-              <p>Kunde: {project.clients?.name ?? "Unbekannt"}</p>
-              <p>E-Mail: {project.clients?.email ?? "—"}</p>
-              <p>Erstellt: {formatDate(project.created_at)}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {activeTab === "overview" ? (
+        <ProjectOverviewTab
+          clientOptions={clientOptions}
+          files={files}
+          isAdmin={isAdmin}
+          isSaving={updateMutation.isPending}
+          onDeleteFile={handleDelete}
+          onDownloadFile={handleDownload}
+          onSave={handleSave}
+          onUploadFile={handleUpload}
+          project={project}
+        />
+      ) : null}
 
-      {isAdmin ? <FileUploadCard onUpload={handleUpload} /> : null}
+      {activeTab === "timeline" ? (
+        <ProjectTimelineTab events={timelineEvents} isSubmitting={timelineMutation.isPending} onSubmit={handleCreateTimeline} />
+      ) : null}
 
-      <Card
-        className="border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
-        style={{ borderRadius: 16 }}
-      >
-        <CardHeader className="pb-3">
-          <CardTitle className="text-2xl text-slate-950">Dateien</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {files.length === 0 ? (
-            <EmptyState description="Zu diesem Projekt wurden noch keine Dateien hochgeladen." title="Keine Dateien" />
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Dateiname</TableHead>
-                  <TableHead>Typ</TableHead>
-                  <TableHead>Groesse</TableHead>
-                  <TableHead>Erstellt</TableHead>
-                  <TableHead className="text-right">Aktionen</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {files.map((file) => (
-                  <TableRow key={file.id}>
-                    <TableCell className="font-medium">{file.filename}</TableCell>
-                    <TableCell>{file.mime_type ?? "unbekannt"}</TableCell>
-                    <TableCell>{formatBytes(file.size)}</TableCell>
-                    <TableCell>{formatDate(file.created_at)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button onClick={() => void handleDownload(file)} size="sm" variant="outline">
-                          <Download className="h-4 w-4" />
-                          Download
-                        </Button>
-                        {isAdmin ? (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button size="sm" variant="destructive">
-                                <Trash2 className="h-4 w-4" />
-                                Loeschen
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Datei löschen</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Die Datei wird aus Storage und Metadaten-Tabelle entfernt.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancelButton>Abbrechen</AlertDialogCancelButton>
-                                <AlertDialogActionButton onClick={() => void handleDelete(file)}>
-                                  Loeschen
-                                </AlertDialogActionButton>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        ) : null}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      {activeTab === "milestones" ? (
+        <ProjectMilestonesTab
+          isAdmin={isAdmin}
+          isCreating={createMilestoneMutation.isPending}
+          isUpdating={updateMilestoneMutation.isPending}
+          milestones={milestones}
+          onCreate={handleCreateMilestone}
+          onStatusChange={handleMilestoneStatusChange}
+        />
+      ) : null}
+
+      {activeTab === "approvals" ? (
+        <ProjectApprovalsTab
+          approvals={approvals}
+          isAdmin={isAdmin}
+          isClient={isClient}
+          isDeciding={decideApprovalMutation.isPending}
+          isRequesting={requestApprovalMutation.isPending}
+          onDecide={handleApprovalDecision}
+          onRequestApproval={handleRequestApproval}
+          projectStatus={project.status}
+        />
+      ) : null}
     </div>
   );
 }

@@ -19,7 +19,7 @@ export function StatusBadge({ active, status }: StatusBadgeProps) {
     case "review":
       return <Badge variant="secondary">Feedback benötigt</Badge>;
     case "delivered":
-      return <Badge variant="success">Abgenommen</Badge>;
+      return <Badge variant="success">Bereit zur Abnahme</Badge>;
     case "archived":
       return <Badge variant="destructive">Archiviert</Badge>;
     default:
