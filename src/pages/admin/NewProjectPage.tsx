@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { createProject, listClientOptions } from "@/api/projects";
-import { logActivity } from "@/api/activity";
 import { ErrorState } from "@/components/common/ErrorState";
 import { LoadingTable } from "@/components/common/LoadingTable";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -13,20 +12,19 @@ import type { ProjectFormValues } from "@/types/app";
 export function NewProjectPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const clientsQuery = useQuery({ queryKey: ["client-options"], queryFn: listClientOptions });
+
+  const clientsQuery = useQuery({
+    queryKey: ["client-options"],
+    queryFn: listClientOptions,
+  });
+
   const mutation = useMutation({
     mutationFn: createProject,
     onSuccess: async (project) => {
-      await logActivity({
-        action: "project_created",
-        entityId: project.id,
-        entityType: "project",
-        metadata: {
-          client_id: project.client_id,
-          status: project.status,
-        },
+      await queryClient.invalidateQueries({
+        queryKey: ["projects", "admin"],
       });
-      await queryClient.invalidateQueries({ queryKey: ["projects", "admin"] });
+
       toast.success("Projekt erstellt.");
       navigate(`/admin/projects/${project.id}`);
     },
@@ -37,20 +35,30 @@ export function NewProjectPage() {
   }
 
   if (clientsQuery.isError) {
-    return <ErrorState message="Client-Liste konnte nicht geladen werden." onRetry={() => void clientsQuery.refetch()} />;
+    return (
+      <ErrorState
+        message="Client-Liste konnte nicht geladen werden."
+        onRetry={() => void clientsQuery.refetch()}
+      />
+    );
   }
 
   async function handleSubmit(values: ProjectFormValues) {
     try {
       await mutation.mutateAsync(values);
     } catch (error) {
-      toast.error(getErrorMessage(error, "Projekt konnte nicht erstellt werden."));
+      toast.error(
+        getErrorMessage(error, "Projekt konnte nicht erstellt werden.")
+      );
     }
   }
 
   return (
     <div className="space-y-6">
-      <PageHeader description="Ein neues Projekt mit Client-Zuordnung anlegen." title="Neues Projekt" />
+      <PageHeader
+        description="Ein neues Projekt mit Client-Zuordnung anlegen."
+        title="Neues Projekt"
+      />
       <ProjectForm
         clientOptions={clientsQuery.data}
         isSubmitting={mutation.isPending}
