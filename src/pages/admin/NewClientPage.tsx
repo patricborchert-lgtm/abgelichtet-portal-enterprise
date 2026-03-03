@@ -17,7 +17,7 @@ export function NewClientPage() {
     mutationFn: generateInvite,
     onSuccess: async (data) => {
       setInviteResult(data);
-      toast.success("Client erstellt und Invite-Link generiert.");
+      toast.success("Kunde erstellt und Invite-Link generiert.");
       await queryClient.invalidateQueries({ queryKey: ["clients"] });
     },
   });
@@ -26,7 +26,7 @@ export function NewClientPage() {
     try {
       await mutation.mutateAsync(values);
     } catch (error) {
-      toast.error(getErrorMessage(error, "Client konnte nicht erstellt werden."));
+      toast.error(getErrorMessage(error, "Kunde konnte nicht erstellt werden."));
     }
   }
 
@@ -40,24 +40,36 @@ export function NewClientPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader description="Legt den Client an und erzeugt direkt einen Invite-Link." title="Neuer Client" />
-      <ClientForm isSubmitting={mutation.isPending} onSubmit={handleSubmit} submitLabel="Client erstellen" />
+    <div className="space-y-8">
+      <PageHeader description="Lege einen neuen Kunden an und erzeuge direkt den passenden Invite-Link." title="Neuer Kunde" />
+      <ClientForm isSubmitting={mutation.isPending} onSubmit={handleSubmit} submitLabel="Kunden erstellen" />
 
       {inviteResult ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Invite-Link</CardTitle>
-            <CardDescription>Der Link wird nur angezeigt. Versand erfolgt manuell durch den Admin.</CardDescription>
+        <Card
+          className="overflow-hidden border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
+          style={{ borderRadius: 16 }}
+        >
+          <div
+            className="h-1.5 w-full"
+            style={{ background: "linear-gradient(90deg, #8F87F1 0%, rgba(143,135,241,0.18) 100%)" }}
+          />
+          <CardHeader className="pb-3">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-400">Einladung</p>
+            <CardTitle className="text-2xl text-slate-950">Invite-Link</CardTitle>
+            <CardDescription className="leading-6 text-slate-500">
+              Der Link wird nur angezeigt. Den Versand übernimmst du manuell.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-xl border bg-slate-50 p-4 text-sm break-all">{inviteResult.inviteLink}</div>
+            <div className="rounded-2xl border border-slate-200/80 bg-[linear-gradient(180deg,rgba(143,135,241,0.05)_0%,rgba(255,255,255,1)_45%)] p-4 text-sm leading-6 text-slate-700 break-all">
+              {inviteResult.inviteLink}
+            </div>
             <div className="flex flex-wrap gap-2">
               <Button onClick={() => void copyInviteLink()} variant="outline">
                 Link kopieren
               </Button>
-              <Button asChild>
-                <Link to={`/admin/clients/${inviteResult.clientId}`}>Zu Client-Details</Link>
+              <Button asChild className="bg-[#8F87F1] text-white hover:bg-[#7c74e2]">
+                <Link to={`/admin/clients/${inviteResult.clientId}`}>Zu Kundendetails</Link>
               </Button>
             </div>
           </CardContent>

@@ -51,8 +51,8 @@ export function AdminDashboardPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        description="Behalte aktive Clients, laufende Projekte und letzte Aktivitaeten zentral im Blick."
-        title="Admin Dashboard"
+        description="Behalte aktive Kunden, laufende Projekte und letzte Aktivitäten zentral im Blick."
+        title="Admin-Dashboard"
       />
 
       <div className="grid gap-5 md:grid-cols-3">
@@ -66,7 +66,7 @@ export function AdminDashboardPage() {
           />
           <CardHeader className="pb-3">
             <p className="text-sm font-medium text-slate-500">Kunden</p>
-            <CardTitle className="text-base text-slate-800">Aktive Clients</CardTitle>
+            <CardTitle className="text-base text-slate-800">Aktive Kunden</CardTitle>
           </CardHeader>
           <CardContent className="flex items-end justify-between">
             <span className="text-4xl font-semibold tracking-tight text-slate-950">{activeClients}</span>
@@ -85,7 +85,7 @@ export function AdminDashboardPage() {
           />
           <CardHeader className="pb-3">
             <p className="text-sm font-medium text-slate-500">Projekte</p>
-            <CardTitle className="text-base text-slate-800">In Arbeit</CardTitle>
+            <CardTitle className="text-base text-slate-800">Projekte in Arbeit</CardTitle>
           </CardHeader>
           <CardContent className="flex items-end justify-between">
             <span className="text-4xl font-semibold tracking-tight text-slate-950">{activeProjects}</span>
@@ -150,7 +150,7 @@ export function AdminDashboardPage() {
                       <div className="space-y-1">
                         <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Projekt</p>
                         <h3 className="text-lg font-semibold text-slate-950">{project.title}</h3>
-                        <p className="text-sm text-slate-500">{project.clients?.name ?? "Kein Client zugewiesen"}</p>
+                        <p className="text-sm text-slate-500">{project.clients?.name ?? "Kein Kunde zugewiesen"}</p>
                       </div>
                       <StatusBadge status={project.status} />
                     </div>

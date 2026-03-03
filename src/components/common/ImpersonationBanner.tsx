@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { logActivity } from "@/api/activity";
 import { getErrorMessage, logDevError } from "@/lib/errors";
 import { useAuth } from "@/hooks/useAuth";
+import type { ActivityPayload } from "@/types/app";
 
 export function ImpersonationBanner() {
   const navigate = useNavigate();
@@ -16,6 +17,16 @@ export function ImpersonationBanner() {
 
   if (!impersonation) {
     return null;
+  }
+
+  function logActivitySafely(payload: ActivityPayload): void {
+    void (async () => {
+      try {
+        await logActivity(payload);
+      } catch {
+        // Logging must never block business flows.
+      }
+    })();
   }
 
   async function restoreAdminSession() {
@@ -29,7 +40,7 @@ export function ImpersonationBanner() {
         throw error;
       }
 
-      await logActivity({
+      logActivitySafely({
         action: "impersonation_stopped",
         entityId: impersonation.clientId,
         entityType: "client",
@@ -55,11 +66,11 @@ export function ImpersonationBanner() {
         <div className="flex items-center gap-3 text-sm">
           <ArrowLeftRight className="h-4 w-4 text-primary" />
           <span>
-            Impersonation aktiv: Sie sehen aktuell den Bereich von <strong>{impersonation.clientName}</strong>.
+            Impersonation aktiv: Du siehst aktuell den Bereich von <strong>{impersonation.clientName}</strong>.
           </span>
         </div>
         <Button onClick={() => void restoreAdminSession()} size="sm" variant="outline">
-          Zurueck zu Admin
+          Zurück zu Admin
         </Button>
       </CardContent>
     </Card>

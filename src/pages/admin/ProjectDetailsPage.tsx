@@ -29,7 +29,7 @@ import { ProjectForm } from "@/components/projects/ProjectForm";
 import { useAuth } from "@/hooks/useAuth";
 import { getErrorMessage } from "@/lib/errors";
 import { formatBytes, formatDate } from "@/lib/utils";
-import type { ProjectFormValues, ProjectFile } from "@/types/app";
+import type { ActivityPayload, ProjectFormValues, ProjectFile } from "@/types/app";
 
 function getProgressFromStatus(status: string): number {
   switch (status) {
@@ -66,6 +66,16 @@ export function ProjectDetailsPage() {
     queryKey: ["project-files", projectId],
   });
 
+  function logActivitySafely(payload: ActivityPayload): void {
+    void (async () => {
+      try {
+        await logActivity(payload);
+      } catch {
+        // Logging must never block business flows.
+      }
+    })();
+  }
+
   const clientOptionsQuery = useQuery({
     enabled: isAdmin,
     queryFn: listClientOptions,
@@ -75,7 +85,7 @@ export function ProjectDetailsPage() {
   const updateMutation = useMutation({
     mutationFn: (values: ProjectFormValues) => updateProject(projectId, values),
     onSuccess: async (project) => {
-      await logActivity({
+      logActivitySafely({
         action: "project_updated",
         entityId: project.id,
         entityType: "project",
@@ -122,7 +132,7 @@ export function ProjectDetailsPage() {
       userId: user.id,
     });
 
-    await logActivity({
+    logActivitySafely({
       action: "file_uploaded",
       entityId: uploaded.id,
       entityType: "project_file",
@@ -138,7 +148,7 @@ export function ProjectDetailsPage() {
   async function handleDelete(file: ProjectFile) {
     try {
       await deleteProjectFile(file);
-      await logActivity({
+      logActivitySafely({
         action: "file_deleted",
         entityId: file.id,
         entityType: "project_file",
@@ -148,9 +158,9 @@ export function ProjectDetailsPage() {
         },
       });
       await queryClient.invalidateQueries({ queryKey: ["project-files", projectId] });
-      toast.success("Datei geloescht.");
+      toast.success("Datei gelöscht.");
     } catch (error) {
-      toast.error(getErrorMessage(error, "Datei konnte nicht geloescht werden."));
+      toast.error(getErrorMessage(error, "Datei konnte nicht gelöscht werden."));
     }
   }
 
@@ -181,7 +191,7 @@ export function ProjectDetailsPage() {
                 <div className="space-y-2">
                   <h1 className="text-3xl font-semibold tracking-tight text-slate-950">{project.title}</h1>
                   <p className="text-sm text-slate-500">
-                    {project.clients?.name ?? "Kein Client zugewiesen"} · Erstellt am {formatDate(project.created_at)}
+                    {project.clients?.name ?? "Kein Kunde zugewiesen"} · Erstellt am {formatDate(project.created_at)}
                   </p>
                 </div>
                 <StatusBadge status={project.status} />
@@ -211,7 +221,7 @@ export function ProjectDetailsPage() {
 
           <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
             <div className="rounded-2xl border border-slate-200/80 bg-[linear-gradient(180deg,rgba(143,135,241,0.06)_0%,rgba(255,255,255,1)_45%)] p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Client</p>
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Kunde</p>
               <p className="mt-2 text-sm font-medium text-slate-900">{project.clients?.name ?? "Unbekannt"}</p>
               <p className="mt-1 text-sm text-slate-500">{project.clients?.email ?? "Keine E-Mail vorhanden"}</p>
             </div>
@@ -258,7 +268,7 @@ export function ProjectDetailsPage() {
                 <StatusBadge status={project.status} />
               </div>
               <div className="space-y-2 text-sm leading-6 text-slate-600">
-                <p>Client: {project.clients?.name}</p>
+                <p>Kunde: {project.clients?.name}</p>
                 <p>Erstellt: {formatDate(project.created_at)}</p>
                 <p>{project.description || "Keine Beschreibung hinterlegt."}</p>
               </div>
@@ -280,7 +290,7 @@ export function ProjectDetailsPage() {
               <StatusBadge status={project.status} />
             </div>
             <div className="rounded-2xl border border-slate-200/80 bg-[linear-gradient(180deg,rgba(143,135,241,0.05)_0%,rgba(255,255,255,1)_45%)] p-4 text-sm text-slate-600">
-              <p>Client: {project.clients?.name ?? "Unbekannt"}</p>
+              <p>Kunde: {project.clients?.name ?? "Unbekannt"}</p>
               <p>E-Mail: {project.clients?.email ?? "—"}</p>
               <p>Erstellt: {formatDate(project.created_at)}</p>
             </div>
@@ -334,7 +344,7 @@ export function ProjectDetailsPage() {
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Datei loeschen</AlertDialogTitle>
+                                <AlertDialogTitle>Datei löschen</AlertDialogTitle>
                                 <AlertDialogDescription>
                                   Die Datei wird aus Storage und Metadaten-Tabelle entfernt.
                                 </AlertDialogDescription>

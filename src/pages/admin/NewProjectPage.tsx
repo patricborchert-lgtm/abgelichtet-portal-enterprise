@@ -37,7 +37,7 @@ export function NewProjectPage() {
   if (clientsQuery.isError) {
     return (
       <ErrorState
-        message="Client-Liste konnte nicht geladen werden."
+        message="Kundenliste konnte nicht geladen werden."
         onRetry={() => void clientsQuery.refetch()}
       />
     );
@@ -54,9 +54,9 @@ export function NewProjectPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
-        description="Ein neues Projekt mit Client-Zuordnung anlegen."
+        description="Lege ein neues Projekt mit Kundenzuordnung in einer klaren, strukturierten Oberfläche an."
         title="Neues Projekt"
       />
       <ProjectForm

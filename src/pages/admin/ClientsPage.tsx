@@ -24,7 +24,7 @@ export function ClientsPage() {
   }
 
   if (clientsQuery.isError) {
-    return <ErrorState message="Clients konnten nicht geladen werden." onRetry={() => void clientsQuery.refetch()} />;
+    return <ErrorState message="Kunden konnten nicht geladen werden." onRetry={() => void clientsQuery.refetch()} />;
   }
 
   const filtered = clientsQuery.data
@@ -46,8 +46,8 @@ export function ClientsPage() {
             <Link to="/admin/clients/new">Client anlegen</Link>
           </Button>
         }
-        description="Verwalten Sie Kundenzugaenge, Stammdaten und Invite-Links."
-        title="Clients"
+        description="Verwalte Kundenzugänge, Stammdaten und Invite-Links."
+        title="Kunden"
       />
 
       <Card
@@ -69,12 +69,12 @@ export function ClientsPage() {
               setSearch(event.target.value);
               setPage(1);
             }}
-            placeholder="Client suchen..."
+            placeholder="Kunden suchen..."
             value={search}
           />
 
           {visibleRows.length === 0 ? (
-            <EmptyState description="Es wurden keine Clients gefunden." title="Keine Treffer" />
+            <EmptyState description="Es wurden keine Kunden gefunden." title="Keine Treffer" />
           ) : (
             <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
               <Table>

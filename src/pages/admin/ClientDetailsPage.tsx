@@ -28,7 +28,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { getErrorMessage } from "@/lib/errors";
 import { formatDate } from "@/lib/utils";
 import { persistImpersonationSession } from "@/lib/storage";
-import type { ClientFormValues } from "@/types/app";
+import type { ActivityPayload, ClientFormValues } from "@/types/app";
 
 export function ClientDetailsPage() {
   const params = useParams();
@@ -45,7 +45,7 @@ export function ClientDetailsPage() {
   const updateMutation = useMutation({
     mutationFn: (values: ClientFormValues) => updateClient(clientId, values),
     onSuccess: async () => {
-      toast.success("Client gespeichert.");
+      toast.success("Kunde gespeichert.");
       await queryClient.invalidateQueries({ queryKey: ["client", clientId] });
       await queryClient.invalidateQueries({ queryKey: ["clients"] });
     },
@@ -54,8 +54,8 @@ export function ClientDetailsPage() {
   const toggleMutation = useMutation({
     mutationFn: (isActive: boolean) => setClientActiveState(clientId, isActive),
     onSuccess: async (_, nextState) => {
-      toast.success(nextState ? "Client aktiviert." : "Client deaktiviert.");
-      await logActivity({
+      toast.success(nextState ? "Kunde aktiviert." : "Kunde deaktiviert.");
+      logActivitySafely({
         action: nextState ? "client_activated" : "client_deactivated",
         entityId: clientId,
         entityType: "client",
@@ -74,12 +74,22 @@ export function ClientDetailsPage() {
     },
   });
 
+  function logActivitySafely(payload: ActivityPayload): void {
+    void (async () => {
+      try {
+        await logActivity(payload);
+      } catch {
+        // Logging must never block business flows.
+      }
+    })();
+  }
+
   if (clientQuery.isLoading) {
     return <LoadingTable />;
   }
 
   if (clientQuery.isError || !clientQuery.data) {
-    return <ErrorState message="Client konnte nicht geladen werden." onRetry={() => void clientQuery.refetch()} />;
+    return <ErrorState message="Kunde konnte nicht geladen werden." onRetry={() => void clientQuery.refetch()} />;
   }
 
   const { client, projects } = clientQuery.data;
@@ -88,7 +98,7 @@ export function ClientDetailsPage() {
     try {
       await updateMutation.mutateAsync(values);
     } catch (error) {
-      toast.error(getErrorMessage(error, "Client konnte nicht gespeichert werden."));
+      toast.error(getErrorMessage(error, "Kunde konnte nicht gespeichert werden."));
     }
   }
 
@@ -129,7 +139,7 @@ export function ClientDetailsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
         actions={
           <>
@@ -137,14 +147,14 @@ export function ClientDetailsPage() {
               Invite neu generieren
             </Button>
             <Button onClick={() => void handleImpersonation()} variant="outline">
-              Als Client ansehen
+              Als Kunde ansehen
             </Button>
             <Button asChild>
               <Link to="/admin/projects/new">Projekt erstellen</Link>
             </Button>
           </>
         }
-        description="Stammdaten, Status, Projekte und Admin-Aktionen fuer diesen Client."
+        description="Stammdaten, Status, Projekte und Admin-Aktionen für diesen Kunden."
         title={client.name}
       />
 
@@ -159,39 +169,42 @@ export function ClientDetailsPage() {
           }}
           isSubmitting={updateMutation.isPending}
           onSubmit={handleSave}
-          submitLabel="Aenderungen speichern"
+          submitLabel="Änderungen speichern"
         />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Client Status</CardTitle>
+        <Card
+          className="border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
+          style={{ borderRadius: 16 }}
+        >
+          <CardHeader className="pb-3">
+            <CardTitle className="text-2xl text-slate-950">Kundenstatus</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between rounded-xl border p-4">
-              <span className="text-sm font-medium">Status</span>
+            <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4">
+              <span className="text-sm font-medium text-slate-600">Status</span>
               <StatusBadge active={client.is_active} />
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="rounded-2xl border border-slate-200/80 bg-[linear-gradient(180deg,rgba(143,135,241,0.05)_0%,rgba(255,255,255,1)_45%)] p-4 text-sm leading-6 text-slate-600">
               <p>Erstellt: {formatDate(client.created_at)}</p>
               <p>E-Mail: {client.email}</p>
             </div>
             <AlertDialog>
-              <AlertDialogTrigger asChild>
+            <AlertDialogTrigger asChild>
                 <Button variant={client.is_active ? "destructive" : "default"}>
-                  {client.is_active ? "Client deaktivieren" : "Client aktivieren"}
+                  {client.is_active ? "Kunde deaktivieren" : "Kunde aktivieren"}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Status aendern</AlertDialogTitle>
+                  <AlertDialogTitle>Status ändern</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Der Client wird per Soft Delete {client.is_active ? "deaktiviert" : "reaktiviert"}.
+                    Der Kunde wird per Soft Delete {client.is_active ? "deaktiviert" : "reaktiviert"}.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancelButton>Abbrechen</AlertDialogCancelButton>
                   <AlertDialogActionButton onClick={() => toggleMutation.mutate(!client.is_active)}>
-                    Bestaetigen
+                    Bestätigen
                   </AlertDialogActionButton>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -200,17 +213,21 @@ export function ClientDetailsPage() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Projekte</CardTitle>
+      <Card
+        className="border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
+        style={{ borderRadius: 16 }}
+      >
+        <CardHeader className="pb-3">
+          <CardTitle className="text-2xl text-slate-950">Projekte</CardTitle>
         </CardHeader>
         <CardContent>
           {projects.length === 0 ? (
-            <EmptyState description="Fuer diesen Client existieren noch keine Projekte." title="Keine Projekte" />
+            <EmptyState description="Für diesen Client existieren noch keine Projekte." title="Keine Projekte" />
           ) : (
-            <Table>
+            <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
+              <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className="bg-slate-50/80 hover:bg-slate-50/80">
                   <TableHead>Titel</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Erstellt</TableHead>
@@ -225,13 +242,14 @@ export function ClientDetailsPage() {
                     <TableCell>{formatDate(project.created_at)}</TableCell>
                     <TableCell className="text-right">
                       <Button asChild size="sm" variant="outline">
-                        <Link to={`/admin/projects/${project.id}`}>Oeffnen</Link>
+                        <Link to={`/admin/projects/${project.id}`}>Öffnen</Link>
                       </Button>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

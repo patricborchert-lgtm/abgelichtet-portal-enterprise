@@ -46,8 +46,8 @@ export function ProjectsPage() {
             <Link to="/admin/projects/new">Projekt anlegen</Link>
           </Button>
         }
-        description="Projektstatus, Zuordnungen und operative Arbeit ueberblicken."
-        title="Projects"
+        description="Behalte Projektstatus, Zuordnungen und die operative Arbeit im Blick."
+        title="Projekte"
       />
 
       <Card

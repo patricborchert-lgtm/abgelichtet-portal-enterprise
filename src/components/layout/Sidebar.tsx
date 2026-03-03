@@ -12,13 +12,13 @@ interface NavigationItem {
 
 const adminNavigation: NavigationItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", to: "/admin" },
-  { icon: Users, label: "Clients", to: "/admin/clients" },
-  { icon: FolderKanban, label: "Projects", to: "/admin/projects" },
+  { icon: Users, label: "Kunden", to: "/admin/clients" },
+  { icon: FolderKanban, label: "Projekte", to: "/admin/projects" },
 ];
 
 const clientNavigation: NavigationItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", to: "/client/dashboard" },
-  { icon: FolderKanban, label: "Projects", to: "/client/dashboard" },
+  { icon: FolderKanban, label: "Projekte", to: "/client/dashboard" },
 ];
 
 export function Sidebar() {

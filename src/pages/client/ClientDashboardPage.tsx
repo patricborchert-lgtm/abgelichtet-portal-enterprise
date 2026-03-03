@@ -46,7 +46,7 @@ export function ClientDashboardPage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader description="Behalte deine Projekte, Freigaben und letzten Aktivitäten zentral im Blick." title="Client Dashboard" />
+      <PageHeader description="Behalte deine Projekte, Freigaben und letzten Aktivitäten zentral im Blick." title="Kunden-Dashboard" />
 
       <div className="grid gap-5 md:grid-cols-3">
         <Card

@@ -58,7 +58,7 @@ export function LoginPage() {
           <div className="rounded-2xl border border-[#8F87F1]/15 bg-white/70 p-5">
             <p className="text-sm font-medium text-slate-900">Sicherer Zugang</p>
             <p className="mt-2 text-sm leading-6 text-slate-500">
-              Admins und Clients melden sich über denselben geschützten Zugang an.
+              Admins und Kunden melden sich über denselben geschützten Zugang an.
             </p>
           </div>
         </div>
@@ -75,7 +75,7 @@ export function LoginPage() {
             <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-400">Login</p>
             <CardTitle className="text-3xl text-slate-950">Willkommen zurück</CardTitle>
             <CardDescription className="leading-6 text-slate-500">
-              Sicherer Zugang für Admins und Clients.
+              Sicherer Zugang für Admins und Kunden.
             </CardDescription>
         </CardHeader>
         <CardContent className="pt-2">

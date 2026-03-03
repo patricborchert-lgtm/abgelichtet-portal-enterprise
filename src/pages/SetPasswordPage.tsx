@@ -26,7 +26,7 @@ export function SetPasswordPage() {
         toast.error(
           getErrorMessage(
             error,
-            "Invite-Link ist ungueltig oder abgelaufen."
+            "Invite-Link ist ungültig oder abgelaufen."
           )
         );
       } finally {
@@ -46,7 +46,7 @@ export function SetPasswordPage() {
     }
 
     if (password !== confirmPassword) {
-      toast.error("Die Passwoerter stimmen nicht ueberein.");
+      toast.error("Die Passwörter stimmen nicht überein.");
       return;
     }
 

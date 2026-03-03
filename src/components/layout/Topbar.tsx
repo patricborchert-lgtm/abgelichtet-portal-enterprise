@@ -12,10 +12,10 @@ export function Topbar() {
   async function handleLogout() {
     try {
       await signOut();
-      toast.success("Sie wurden ausgeloggt.");
+      toast.success("Du wurdest ausgeloggt.");
       navigate("/login");
     } catch (error) {
-      toast.error(getErrorMessage(error, "Logout fehlgeschlagen."));
+      toast.error(getErrorMessage(error, "Abmelden fehlgeschlagen."));
     }
   }
 
@@ -24,7 +24,7 @@ export function Topbar() {
       <div>
         <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">abgelichtet.ch</p>
         <p className="text-lg font-semibold text-slate-950">
-          {profile?.role === "admin" ? "Admin Workspace" : "Client Workspace"}
+          {profile?.role === "admin" ? "Admin-Bereich" : "Kundenbereich"}
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-3">
@@ -34,7 +34,7 @@ export function Topbar() {
         </div>
         <Button className="border-slate-200 bg-white hover:bg-slate-50" onClick={() => void handleLogout()} variant="outline">
           <LogOut className="h-4 w-4" />
-          Logout
+          Ausloggen
         </Button>
       </div>
     </div>

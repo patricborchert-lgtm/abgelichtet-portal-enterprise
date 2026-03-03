@@ -69,10 +69,10 @@ export function ProjectForm({
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-slate-700">Client</Label>
+            <Label className="text-slate-700">Kunde</Label>
             <Select onValueChange={(value) => updateValue("clientId", value)} value={values.clientId}>
               <SelectTrigger className="border-slate-200 bg-slate-50/70">
-                <SelectValue placeholder="Client waehlen" />
+                <SelectValue placeholder="Kunden wählen" />
               </SelectTrigger>
               <SelectContent>
                 {clientOptions.map((client) => (
@@ -87,7 +87,7 @@ export function ProjectForm({
             <Label className="text-slate-700">Status</Label>
             <Select onValueChange={(value) => updateValue("status", value as ProjectFormValues["status"])} value={values.status}>
               <SelectTrigger className="border-slate-200 bg-slate-50/70">
-                <SelectValue placeholder="Status waehlen" />
+                <SelectValue placeholder="Status wählen" />
               </SelectTrigger>
               <SelectContent>
                 {PROJECT_STATUS_OPTIONS.map((option) => (
