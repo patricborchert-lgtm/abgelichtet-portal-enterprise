@@ -247,6 +247,38 @@ export interface Database {
           project_id?: string;
         };
       };
+      notifications: {
+        Row: {
+          created_at: string;
+          id: string;
+          is_read: boolean;
+          message: string;
+          project_id: string;
+          title: string;
+          type: "chat_message" | "file_uploaded" | "approval_requested" | "approved" | "changes_requested";
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          is_read?: boolean;
+          message: string;
+          project_id: string;
+          title: string;
+          type: "chat_message" | "file_uploaded" | "approval_requested" | "approved" | "changes_requested";
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          is_read?: boolean;
+          message?: string;
+          project_id?: string;
+          title?: string;
+          type?: "chat_message" | "file_uploaded" | "approval_requested" | "approved" | "changes_requested";
+          user_id?: string;
+        };
+      };
       projects: {
         Row: {
           client_id: string;
@@ -307,6 +339,15 @@ export interface Database {
       };
     };
     Functions: {
+      create_project_notification: {
+        Args: {
+          p_message: string;
+          p_project_id: string;
+          p_title: string;
+          p_type: "chat_message" | "file_uploaded" | "approval_requested" | "approved" | "changes_requested";
+        };
+        Returns: number;
+      };
       is_admin: {
         Args: Record<string, never>;
         Returns: boolean;

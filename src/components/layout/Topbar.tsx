@@ -1,13 +1,53 @@
+import { useEffect, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LogOut, UserCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { getUnreadNotificationCount, listNotifications, markNotificationRead } from "@/api/notifications";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { NotificationDropdown } from "@/components/notifications/NotificationDropdown";
 import { useAuth } from "@/hooks/useAuth";
 import { getErrorMessage } from "@/lib/errors";
+import type { Notification } from "@/types/app";
 
 export function Topbar() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { profile, signOut, user } = useAuth();
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const notificationRootRef = useRef<HTMLDivElement | null>(null);
+
+  const notificationsQuery = useQuery({
+    enabled: Boolean(user),
+    queryFn: () => listNotifications(12),
+    queryKey: ["notifications", "topbar"],
+    refetchInterval: 10000,
+  });
+
+  const unreadCountQuery = useQuery({
+    enabled: Boolean(user),
+    queryFn: getUnreadNotificationCount,
+    queryKey: ["notifications", "unread-count"],
+    refetchInterval: 10000,
+  });
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (!notificationRootRef.current) {
+        return;
+      }
+
+      if (!notificationRootRef.current.contains(event.target as Node)) {
+        setIsNotificationOpen(false);
+      }
+    }
+
+    window.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      window.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   async function handleLogout() {
     try {
@@ -19,6 +59,20 @@ export function Topbar() {
     }
   }
 
+  async function handleNotificationClick(notification: Notification) {
+    if (!notification.is_read) {
+      try {
+        await markNotificationRead(notification.id);
+        await queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      } catch {
+        // Notification read-state must never block navigation.
+      }
+    }
+
+    setIsNotificationOpen(false);
+    navigate(profile?.role === "admin" ? `/admin/projects/${notification.project_id}` : `/project/${notification.project_id}`);
+  }
+
   return (
     <div className="flex flex-col gap-4 rounded-2xl border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(246,244,255,0.96)_100%)] px-6 py-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] backdrop-blur md:flex-row md:items-center md:justify-between">
       <div>
@@ -28,6 +82,20 @@ export function Topbar() {
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-3">
+        <div className="relative" ref={notificationRootRef}>
+          <NotificationBell
+            isOpen={isNotificationOpen}
+            onClick={() => setIsNotificationOpen((current) => !current)}
+            unreadCount={unreadCountQuery.data ?? 0}
+          />
+          {isNotificationOpen ? (
+            <NotificationDropdown
+              isLoading={notificationsQuery.isLoading}
+              notifications={notificationsQuery.data ?? []}
+              onNotificationClick={handleNotificationClick}
+            />
+          ) : null}
+        </div>
         <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm shadow-[0_8px_20px_rgba(15,23,42,0.04)]">
           <UserCircle2 className="h-4 w-4 text-[#6E65D8]" />
           <span className="font-medium text-slate-800">{user?.email}</span>

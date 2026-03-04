@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { logActivity } from "@/api/activity";
 import { sendProjectEmail } from "@/api/emails";
 import { deleteProjectFile, getProjectFileDownloadUrl, listProjectFiles, uploadProjectFile } from "@/api/files";
+import { createProjectNotification } from "@/api/notifications";
 import { createProjectMessage, listProjectMessages } from "@/api/project-messages";
 import { getProjectDetails, listClientOptions, updateProject } from "@/api/projects";
 import {
@@ -39,6 +40,7 @@ import type {
   ProjectFileFolderKey,
   ProjectFormValues,
   ProjectStatus,
+  NotificationType,
   TimelineEventFormValues,
 } from "@/types/app";
 import { useParams } from "react-router-dom";
@@ -136,6 +138,21 @@ export function ProjectDetailsPage() {
         });
       } catch {
         // Email delivery must never block business flows.
+      }
+    })();
+  }
+
+  function createProjectNotificationSafely(type: NotificationType, title: string, message: string): void {
+    void (async () => {
+      try {
+        await createProjectNotification({
+          message,
+          projectId,
+          title,
+          type,
+        });
+      } catch {
+        // Notifications must never block business flows.
       }
     })();
   }
@@ -345,13 +362,15 @@ export function ProjectDetailsPage() {
     logActivitySafely({
       action: "file_uploaded",
       entityId: uploaded.id,
-        entityType: "project_file",
-        metadata: {
-          filename: uploaded.filename,
-          folder,
-          project_id: projectId,
-        },
-      });
+      entityType: "project_file",
+      metadata: {
+        filename: uploaded.filename,
+        folder,
+        project_id: projectId,
+      },
+    });
+
+    createProjectNotificationSafely("file_uploaded", "Neue Datei im Projekt", `${uploaded.filename} wurde hochgeladen.`);
 
     await queryClient.invalidateQueries({ queryKey: ["project-files", projectId] });
   }
@@ -402,6 +421,8 @@ export function ProjectDetailsPage() {
         authorLabel: getAuthorLabel(),
         body,
       });
+
+      createProjectNotificationSafely("chat_message", "Neue Chat-Nachricht im Projekt", body);
 
       try {
         await sendProjectEmail({
@@ -462,6 +483,11 @@ export function ProjectDetailsPage() {
     try {
       await requestApprovalMutation.mutateAsync(message);
       sendProjectEmailSafely("approval_requested", message || undefined);
+      createProjectNotificationSafely(
+        "approval_requested",
+        "Abnahme angefordert",
+        message || "Für dieses Projekt wurde eine Abnahme angefragt.",
+      );
       await appendSupportingTimelineEvent({
         authorLabel: getAuthorLabel(),
         eventType: "approval_requested",
@@ -486,6 +512,11 @@ export function ProjectDetailsPage() {
         values,
       });
       sendProjectEmailSafely(values.status, values.comment || undefined);
+      createProjectNotificationSafely(
+        values.status,
+        values.status === "approved" ? "Projekt abgenommen" : "Änderungen angefordert",
+        values.comment || (values.status === "approved" ? "Das Projekt wurde abgenommen." : "Es wurden Änderungen angefordert."),
+      );
       await appendSupportingTimelineEvent({
         authorLabel: getAuthorLabel(),
         eventType: values.status,
