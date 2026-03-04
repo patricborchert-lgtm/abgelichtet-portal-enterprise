@@ -90,3 +90,10 @@ export interface ClientDashboardMetrics {
   deliveredProjects: number;
   pendingReview: number;
 }
+
+export interface WorkspaceDashboardMetrics {
+  completedMilestones: number;
+  pendingApprovals: number;
+  recentMessages: number;
+  timelineEntries: number;
+}

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { listRecentActivity } from "@/api/activity";
+import { getProjectWorkspaceSummary } from "@/api/dashboard";
 import { listMyProjects } from "@/api/projects";
 import { EmptyState } from "@/components/common/EmptyState";
 import { ErrorState } from "@/components/common/ErrorState";
@@ -31,24 +32,34 @@ function getProgressFromStatus(status: string): number {
 export function ClientDashboardPage() {
   const projectsQuery = useQuery({ queryKey: ["projects", "mine"], queryFn: listMyProjects });
   const activityQuery = useQuery({ queryKey: ["activity", "mine"], queryFn: () => listRecentActivity(8) });
+  const workspaceQuery = useQuery({
+    enabled: Boolean(projectsQuery.data?.length),
+    queryKey: ["dashboard", "workspace", "mine", projectsQuery.data?.map((project) => project.id).join(",") ?? ""],
+    queryFn: () => getProjectWorkspaceSummary((projectsQuery.data ?? []).map((project) => project.id)),
+  });
 
-  if (projectsQuery.isLoading || activityQuery.isLoading) {
+  if (projectsQuery.isLoading || activityQuery.isLoading || workspaceQuery.isLoading) {
     return <LoadingTable />;
   }
 
-  if (projectsQuery.isError || activityQuery.isError) {
+  if (projectsQuery.isError || activityQuery.isError || workspaceQuery.isError) {
     return <ErrorState message="Dashboard konnte nicht geladen werden." />;
   }
 
   const projects = projectsQuery.data;
   const activity = activityQuery.data;
+  const workspace = workspaceQuery.data ?? {};
   const recentProjects = projects.slice(0, 6);
+  const pendingApprovals = Object.values(workspace).reduce((total, entry) => total + entry.pendingApprovals, 0);
+  const messageCount = Object.values(workspace).reduce((total, entry) => total + entry.messageCount, 0);
+  const completedMilestones = Object.values(workspace).reduce((total, entry) => total + entry.completedMilestones, 0);
+  const totalMilestones = Object.values(workspace).reduce((total, entry) => total + entry.totalMilestones, 0);
 
   return (
     <div className="space-y-8">
       <PageHeader description="Behalte deine Projekte, Freigaben und letzten Aktivitäten zentral im Blick." title="Kunden-Dashboard" />
 
-      <div className="grid gap-5 md:grid-cols-3">
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
         <Card
           className="overflow-hidden border-white/70 bg-white shadow-[0_18px_45px_rgba(143,135,241,0.12)]"
           style={{ borderRadius: 16 }}
@@ -79,12 +90,12 @@ export function ClientDashboardPage() {
             style={{ background: "linear-gradient(90deg, #8F87F1 0%, rgba(143,135,241,0.18) 100%)" }}
           />
           <CardHeader className="pb-3">
-            <p className="text-sm font-medium text-slate-500">Feedback</p>
-            <CardTitle className="text-base text-slate-800">In Prüfung</CardTitle>
+            <p className="text-sm font-medium text-slate-500">Freigaben</p>
+            <CardTitle className="text-base text-slate-800">Offene Abnahmen</CardTitle>
           </CardHeader>
           <CardContent className="flex items-end justify-between">
             <span className="text-4xl font-semibold tracking-tight text-slate-950">
-              {projects.filter((project) => project.status === "review").length}
+              {pendingApprovals}
             </span>
             <span className="rounded-full bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-700">
               Offen
@@ -100,15 +111,35 @@ export function ClientDashboardPage() {
             style={{ background: "linear-gradient(90deg, #8F87F1 0%, rgba(143,135,241,0.18) 100%)" }}
           />
           <CardHeader className="pb-3">
-            <p className="text-sm font-medium text-slate-500">Abgeschlossen</p>
-            <CardTitle className="text-base text-slate-800">Gelieferte Projekte</CardTitle>
+            <p className="text-sm font-medium text-slate-500">Meilensteine</p>
+            <CardTitle className="text-base text-slate-800">Erledigte Schritte</CardTitle>
           </CardHeader>
           <CardContent className="flex items-end justify-between">
-            <span className="text-4xl font-semibold tracking-tight text-slate-950">
-              {projects.filter((project) => project.status === "delivered").length}
-            </span>
+            <div>
+              <span className="text-4xl font-semibold tracking-tight text-slate-950">{completedMilestones}</span>
+              <p className="mt-2 text-xs text-slate-500">von {totalMilestones} Meilensteinen</p>
+            </div>
             <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700">
               Fertig
+            </span>
+          </CardContent>
+        </Card>
+        <Card
+          className="overflow-hidden border-white/70 bg-white shadow-[0_18px_45px_rgba(143,135,241,0.12)]"
+          style={{ borderRadius: 16 }}
+        >
+          <div
+            className="h-1.5 w-full"
+            style={{ background: "linear-gradient(90deg, #8F87F1 0%, rgba(143,135,241,0.18) 100%)" }}
+          />
+          <CardHeader className="pb-3">
+            <p className="text-sm font-medium text-slate-500">Chat</p>
+            <CardTitle className="text-base text-slate-800">Nachrichten</CardTitle>
+          </CardHeader>
+          <CardContent className="flex items-end justify-between">
+            <span className="text-4xl font-semibold tracking-tight text-slate-950">{messageCount}</span>
+            <span className="rounded-full bg-[#8F87F1]/10 px-3 py-1 text-xs font-medium text-[#6E65D8]">
+              Neu
             </span>
           </CardContent>
         </Card>
@@ -139,6 +170,11 @@ export function ClientDashboardPage() {
             ) : (
               recentProjects.map((project) => {
                 const progress = getProgressFromStatus(project.status);
+                const projectWorkspace = workspace[project.id];
+                const milestoneProgress =
+                  projectWorkspace && projectWorkspace.totalMilestones > 0
+                    ? Math.round((projectWorkspace.completedMilestones / projectWorkspace.totalMilestones) * 100)
+                    : 0;
 
                 return (
                   <div
@@ -170,7 +206,29 @@ export function ClientDashboardPage() {
                       </div>
                     </div>
 
-                    <div className="mt-5">
+                    <div className="mt-4 grid gap-2 rounded-2xl border border-slate-200/70 bg-white/80 p-3 text-sm text-slate-600">
+                      <div className="flex items-center justify-between">
+                        <span>Offene Freigaben</span>
+                        <span className="font-medium text-slate-900">{projectWorkspace?.pendingApprovals ?? 0}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Nachrichten</span>
+                        <span className="font-medium text-slate-900">{projectWorkspace?.messageCount ?? 0}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Meilensteine</span>
+                        <span className="font-medium text-slate-900">
+                          {projectWorkspace?.completedMilestones ?? 0}/{projectWorkspace?.totalMilestones ?? 0} ({milestoneProgress}%)
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 space-y-3">
+                      <p className="text-xs text-slate-400">
+                        {projectWorkspace?.latestMessageAt
+                          ? `Letzte Nachricht ${formatDate(projectWorkspace.latestMessageAt)}`
+                          : "Noch keine Chat-Nachricht"}
+                      </p>
                       <Button asChild className="w-full" size="sm">
                         <Link to={`/project/${project.id}`}>Projekt öffnen</Link>
                       </Button>

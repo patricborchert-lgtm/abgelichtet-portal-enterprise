@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { listRecentActivity } from "@/api/activity";
 import { listClients } from "@/api/clients";
+import { getProjectWorkspaceSummary } from "@/api/dashboard";
 import { listAdminProjects } from "@/api/projects";
 import { EmptyState } from "@/components/common/EmptyState";
 import { ErrorState } from "@/components/common/ErrorState";
@@ -31,21 +32,29 @@ export function AdminDashboardPage() {
   const clientsQuery = useQuery({ queryKey: ["clients"], queryFn: listClients });
   const projectsQuery = useQuery({ queryKey: ["projects", "admin"], queryFn: listAdminProjects });
   const activityQuery = useQuery({ queryKey: ["activity", "recent"], queryFn: () => listRecentActivity(10) });
+  const workspaceQuery = useQuery({
+    enabled: Boolean(projectsQuery.data?.length),
+    queryKey: ["dashboard", "workspace", "admin", projectsQuery.data?.map((project) => project.id).join(",") ?? ""],
+    queryFn: () => getProjectWorkspaceSummary((projectsQuery.data ?? []).map((project) => project.id)),
+  });
 
-  if (clientsQuery.isLoading || projectsQuery.isLoading || activityQuery.isLoading) {
+  if (clientsQuery.isLoading || projectsQuery.isLoading || activityQuery.isLoading || workspaceQuery.isLoading) {
     return <LoadingTable />;
   }
 
-  if (clientsQuery.isError || projectsQuery.isError || activityQuery.isError) {
+  if (clientsQuery.isError || projectsQuery.isError || activityQuery.isError || workspaceQuery.isError) {
     return <ErrorState message="Dashboard-Daten konnten nicht geladen werden." />;
   }
 
   const clients = clientsQuery.data;
   const projects = projectsQuery.data;
   const activity = activityQuery.data;
+  const workspace = workspaceQuery.data ?? {};
   const activeClients = clients.filter((client) => client.is_active).length;
   const activeProjects = projects.filter((project) => project.status === "active").length;
-  const archivedProjects = projects.filter((project) => project.status === "archived").length;
+  const pendingApprovals = Object.values(workspace).reduce((total, entry) => total + entry.pendingApprovals, 0);
+  const recentMessages = Object.values(workspace).reduce((total, entry) => total + entry.messageCount, 0);
+  const timelineEntries = Object.values(workspace).reduce((total, entry) => total + entry.timelineCount, 0);
   const recentProjects = projects.slice(0, 6);
 
   return (
@@ -55,7 +64,7 @@ export function AdminDashboardPage() {
         title="Admin-Dashboard"
       />
 
-      <div className="grid gap-5 md:grid-cols-3">
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
         <Card
           className="overflow-hidden border-white/70 bg-white shadow-[0_18px_45px_rgba(143,135,241,0.12)]"
           style={{ borderRadius: 16 }}
@@ -103,13 +112,35 @@ export function AdminDashboardPage() {
             style={{ background: "linear-gradient(90deg, #8F87F1 0%, rgba(143,135,241,0.18) 100%)" }}
           />
           <CardHeader className="pb-3">
-            <p className="text-sm font-medium text-slate-500">Archiv</p>
-            <CardTitle className="text-base text-slate-800">Archivierte Projekte</CardTitle>
+            <p className="text-sm font-medium text-slate-500">Abnahme</p>
+            <CardTitle className="text-base text-slate-800">Offene Freigaben</CardTitle>
           </CardHeader>
           <CardContent className="flex items-end justify-between">
-            <span className="text-4xl font-semibold tracking-tight text-slate-950">{archivedProjects}</span>
+            <span className="text-4xl font-semibold tracking-tight text-slate-950">{pendingApprovals}</span>
+            <span className="rounded-full bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-700">
+              Offen
+            </span>
+          </CardContent>
+        </Card>
+        <Card
+          className="overflow-hidden border-white/70 bg-white shadow-[0_18px_45px_rgba(143,135,241,0.12)]"
+          style={{ borderRadius: 16 }}
+        >
+          <div
+            className="h-1.5 w-full"
+            style={{ background: "linear-gradient(90deg, #8F87F1 0%, rgba(143,135,241,0.18) 100%)" }}
+          />
+          <CardHeader className="pb-3">
+            <p className="text-sm font-medium text-slate-500">Kommunikation</p>
+            <CardTitle className="text-base text-slate-800">Nachrichten & Timeline</CardTitle>
+          </CardHeader>
+          <CardContent className="flex items-end justify-between">
+            <div>
+              <span className="text-4xl font-semibold tracking-tight text-slate-950">{recentMessages}</span>
+              <p className="mt-2 text-xs text-slate-500">{timelineEntries} Timeline-Einträge</p>
+            </div>
             <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-medium text-slate-600">
-              Historie
+              Verlauf
             </span>
           </CardContent>
         </Card>
@@ -140,6 +171,11 @@ export function AdminDashboardPage() {
             ) : (
               recentProjects.map((project) => {
                 const progress = getProgressFromStatus(project.status);
+                const projectWorkspace = workspace[project.id];
+                const milestoneProgress =
+                  projectWorkspace && projectWorkspace.totalMilestones > 0
+                    ? Math.round((projectWorkspace.completedMilestones / projectWorkspace.totalMilestones) * 100)
+                    : 0;
 
                 return (
                   <div
@@ -171,8 +207,29 @@ export function AdminDashboardPage() {
                       </div>
                     </div>
 
+                    <div className="mt-4 grid gap-2 rounded-2xl border border-slate-200/70 bg-white/80 p-3 text-sm text-slate-600">
+                      <div className="flex items-center justify-between">
+                        <span>Offene Abnahmen</span>
+                        <span className="font-medium text-slate-900">{projectWorkspace?.pendingApprovals ?? 0}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Nachrichten</span>
+                        <span className="font-medium text-slate-900">{projectWorkspace?.messageCount ?? 0}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Meilensteine</span>
+                        <span className="font-medium text-slate-900">
+                          {projectWorkspace?.completedMilestones ?? 0}/{projectWorkspace?.totalMilestones ?? 0} ({milestoneProgress}%)
+                        </span>
+                      </div>
+                    </div>
+
                     <div className="mt-5 flex items-center justify-between text-xs text-slate-400">
-                      <span>Erstellt am {formatDate(project.created_at)}</span>
+                      <span>
+                        {projectWorkspace?.latestActivityAt
+                          ? `Letzte Aktivität ${formatDate(projectWorkspace.latestActivityAt)}`
+                          : `Erstellt am ${formatDate(project.created_at)}`}
+                      </span>
                       <span>{project.id.slice(0, 8)}</span>
                     </div>
                   </div>
