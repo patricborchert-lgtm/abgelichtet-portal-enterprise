@@ -1,6 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
 
-type ProjectEmailEvent = "project_created" | "approval_requested" | "approved" | "changes_requested";
+type ProjectEmailEvent =
+  | "project_created"
+  | "approval_requested"
+  | "approved"
+  | "changes_requested";
 
 interface SendProjectEmailPayload {
   comment?: string;
@@ -8,22 +12,11 @@ interface SendProjectEmailPayload {
   type: ProjectEmailEvent;
 }
 
-export async function sendProjectEmail(payload: SendProjectEmailPayload): Promise<void> {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  const accessToken = session?.access_token;
-
-  if (!accessToken) {
-    throw new Error("Keine aktive Session für den E-Mail-Versand vorhanden.");
-  }
-
+export async function sendProjectEmail(
+  payload: SendProjectEmailPayload
+): Promise<void> {
   const result = await supabase.functions.invoke("send-project-email", {
     body: payload,
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
   });
 
   if (result.error) {
