@@ -17,6 +17,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FileUploadCard } from "@/components/files/FileUploadCard";
 import { ProjectForm } from "@/components/projects/ProjectForm";
+import { LEGACY_PROJECT_FILE_GROUP, PROJECT_FILE_FOLDERS } from "@/lib/constants";
+import { getProjectFileGroup } from "@/lib/storage";
 import { formatBytes, formatDate } from "@/lib/utils";
 import type { Client, ProjectFile, ProjectFileFolderKey, ProjectFormValues } from "@/types/app";
 import type { ProjectWithClient } from "@/api/projects";
@@ -44,6 +46,14 @@ export function ProjectOverviewTab({
   onUploadFile,
   project,
 }: ProjectOverviewTabProps) {
+  const fileGroups = [...PROJECT_FILE_FOLDERS, LEGACY_PROJECT_FILE_GROUP]
+    .map((group) => ({
+      files: files.filter((file) => getProjectFileGroup(file.storage_path) === group.value),
+      label: group.label,
+      value: group.value,
+    }))
+    .filter((group) => group.files.length > 0);
+
   return (
     <div className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
@@ -108,59 +118,71 @@ export function ProjectOverviewTab({
           {files.length === 0 ? (
             <EmptyState description="Zu diesem Projekt wurden noch keine Dateien hochgeladen." title="Keine Dateien" />
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Dateiname</TableHead>
-                  <TableHead>Typ</TableHead>
-                  <TableHead>Größe</TableHead>
-                  <TableHead>Erstellt</TableHead>
-                  <TableHead className="text-right">Aktionen</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {files.map((file) => (
-                  <TableRow key={file.id}>
-                    <TableCell className="font-medium">{file.filename}</TableCell>
-                    <TableCell>{file.mime_type ?? "unbekannt"}</TableCell>
-                    <TableCell>{formatBytes(file.size)}</TableCell>
-                    <TableCell>{formatDate(file.created_at)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button onClick={() => void onDownloadFile(file)} size="sm" variant="outline">
-                          <Download className="h-4 w-4" />
-                          Download
-                        </Button>
-                        {isAdmin ? (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button size="sm" variant="destructive">
-                                <Trash2 className="h-4 w-4" />
-                                Löschen
+            <div className="space-y-6">
+              {fileGroups.map((group) => (
+                <div key={group.value} className="space-y-3">
+                  <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-[linear-gradient(180deg,rgba(143,135,241,0.04)_0%,rgba(255,255,255,1)_55%)] px-4 py-3">
+                    <div>
+                      <h3 className="text-base font-semibold text-slate-950">{group.label}</h3>
+                      <p className="text-sm text-slate-500">{group.files.length} Datei{group.files.length === 1 ? "" : "en"}</p>
+                    </div>
+                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Dateiname</TableHead>
+                        <TableHead>Typ</TableHead>
+                        <TableHead>Größe</TableHead>
+                        <TableHead>Erstellt</TableHead>
+                        <TableHead className="text-right">Aktionen</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {group.files.map((file) => (
+                        <TableRow key={file.id}>
+                          <TableCell className="font-medium">{file.filename}</TableCell>
+                          <TableCell>{file.mime_type ?? "unbekannt"}</TableCell>
+                          <TableCell>{formatBytes(file.size)}</TableCell>
+                          <TableCell>{formatDate(file.created_at)}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button onClick={() => void onDownloadFile(file)} size="sm" variant="outline">
+                                <Download className="h-4 w-4" />
+                                Download
                               </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Datei löschen</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Die Datei wird aus Storage und Metadaten-Tabelle entfernt.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancelButton>Abbrechen</AlertDialogCancelButton>
-                                <AlertDialogActionButton onClick={() => void onDeleteFile(file)}>
-                                  Löschen
-                                </AlertDialogActionButton>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        ) : null}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                              {isAdmin ? (
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button size="sm" variant="destructive">
+                                      <Trash2 className="h-4 w-4" />
+                                      Löschen
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Datei löschen</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Die Datei wird aus Storage und Metadaten-Tabelle entfernt.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancelButton>Abbrechen</AlertDialogCancelButton>
+                                      <AlertDialogActionButton onClick={() => void onDeleteFile(file)}>
+                                        Löschen
+                                      </AlertDialogActionButton>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              ) : null}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>

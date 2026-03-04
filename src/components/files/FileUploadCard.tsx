@@ -1,6 +1,7 @@
-import { useState, type ChangeEvent } from "react";
+import { useState, type ChangeEvent, type DragEvent } from "react";
 import { toast } from "sonner";
 import { Upload } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { PROJECT_FILE_FOLDERS, UPLOAD_FILE_HINT } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,18 +18,17 @@ interface FileUploadCardProps {
 
 export function FileUploadCard({ disabled = false, onUpload }: FileUploadCardProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragActive, setIsDragActive] = useState(false);
   const [folder, setFolder] = useState<ProjectFileFolderKey>("briefing-inhalte");
 
-  async function handleChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-
+  async function processUpload(file: File, onDone?: () => void) {
     if (!file) {
       return;
     }
 
     if (!isAllowedUploadFile(file.name)) {
       toast.error("Dieses Dateiformat ist nicht erlaubt.");
-      event.target.value = "";
+      onDone?.();
       return;
     }
 
@@ -37,12 +37,47 @@ export function FileUploadCard({ disabled = false, onUpload }: FileUploadCardPro
     try {
       await onUpload(file, folder);
       toast.success("Datei erfolgreich hochgeladen.");
-      event.target.value = "";
+      onDone?.();
     } catch (error) {
       toast.error(getErrorMessage(error, "Datei konnte nicht hochgeladen werden."));
     } finally {
       setIsUploading(false);
     }
+  }
+
+  async function handleChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    await processUpload(file, () => {
+      event.target.value = "";
+    });
+  }
+
+  function handleDragOver(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    if (disabled || isUploading) {
+      return;
+    }
+
+    setIsDragActive(true);
+  }
+
+  function handleDragLeave(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+      setIsDragActive(false);
+    }
+  }
+
+  async function handleDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setIsDragActive(false);
+
+    if (disabled || isUploading) {
+      return;
+    }
+
+    const file = event.dataTransfer.files?.[0];
+    await processUpload(file);
   }
 
   return (
@@ -62,14 +97,25 @@ export function FileUploadCard({ disabled = false, onUpload }: FileUploadCardPro
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="rounded-2xl border border-dashed border-[#8F87F1]/30 bg-[linear-gradient(180deg,rgba(143,135,241,0.06)_0%,rgba(255,255,255,1)_55%)] p-5">
+        <div
+          className={cn(
+            "rounded-2xl border border-dashed p-5 transition-colors",
+            isDragActive
+              ? "border-[#8F87F1] bg-[linear-gradient(180deg,rgba(143,135,241,0.12)_0%,rgba(255,255,255,1)_55%)]"
+              : "border-[#8F87F1]/30 bg-[linear-gradient(180deg,rgba(143,135,241,0.06)_0%,rgba(255,255,255,1)_55%)]",
+          )}
+          onDragLeave={handleDragLeave}
+          onDragOver={handleDragOver}
+          onDrop={(event) => void handleDrop(event)}
+        >
           <p className="text-sm font-medium text-slate-800">Datei hinzufügen</p>
           <p className="mt-1 text-sm leading-6 text-slate-500">
-            Wähle einen Ordner aus und lade deine Datei direkt in dieses Projekt hoch.
+            Wähle einen Ordner aus oder ziehe deine Datei direkt in diesen Bereich.
           </p>
           <p className="mt-3 text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
             {UPLOAD_FILE_HINT}
           </p>
+          {isDragActive ? <p className="mt-3 text-sm font-medium text-[#6E65D8]">Datei hier ablegen, um den Upload zu starten.</p> : null}
         </div>
         <div className="space-y-2">
           <Label>Dateiordner</Label>

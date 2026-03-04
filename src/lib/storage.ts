@@ -1,6 +1,4 @@
-import { LOCAL_STORAGE_KEYS } from "@/lib/constants";
-
-import { ALLOWED_UPLOAD_EXTENSIONS } from "@/lib/constants";
+import { ALLOWED_UPLOAD_EXTENSIONS, LEGACY_PROJECT_FILE_GROUP, PROJECT_FILE_FOLDERS, LOCAL_STORAGE_KEYS } from "@/lib/constants";
 import type { ProjectFileFolderKey } from "@/types/app";
 
 export interface StoredImpersonationSession {
@@ -37,6 +35,13 @@ export function getFileExtension(filename: string): string {
 export function isAllowedUploadFile(filename: string): boolean {
   const extension = getFileExtension(filename);
   return ALLOWED_UPLOAD_EXTENSIONS.includes(extension as (typeof ALLOWED_UPLOAD_EXTENSIONS)[number]);
+}
+
+export function getProjectFileGroup(storagePath: string): ProjectFileFolderKey | typeof LEGACY_PROJECT_FILE_GROUP.value {
+  const parts = storagePath.split("/");
+  const folder = parts[2];
+
+  return PROJECT_FILE_FOLDERS.some((entry) => entry.value === folder) ? (folder as ProjectFileFolderKey) : LEGACY_PROJECT_FILE_GROUP.value;
 }
 
 export function persistImpersonationSession(payload: StoredImpersonationSession): void {

@@ -32,6 +32,11 @@ export const PROJECT_FILE_FOLDERS: Array<{ label: string; value: ProjectFileFold
   { value: "final", label: "Final" },
 ];
 
+export const LEGACY_PROJECT_FILE_GROUP = {
+  label: "Weitere Dateien",
+  value: "legacy",
+} as const;
+
 export const ALLOWED_UPLOAD_EXTENSIONS = [
   "jpg",
   "jpeg",
