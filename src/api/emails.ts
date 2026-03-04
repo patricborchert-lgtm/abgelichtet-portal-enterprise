@@ -9,8 +9,21 @@ interface SendProjectEmailPayload {
 }
 
 export async function sendProjectEmail(payload: SendProjectEmailPayload): Promise<void> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const accessToken = session?.access_token;
+
+  if (!accessToken) {
+    throw new Error("Keine aktive Session für den E-Mail-Versand vorhanden.");
+  }
+
   const result = await supabase.functions.invoke("send-project-email", {
     body: payload,
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
   });
 
   if (result.error) {
