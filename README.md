@@ -151,6 +151,14 @@ Im Supabase SQL Editor in dieser Reihenfolge ausfuehren:
 1. `supabase/migrations/202603030001_initial_schema.sql`
 2. `supabase/migrations/202603030002_rls_policies.sql`
 3. `supabase/migrations/202603030003_storage_policies.sql`
+4. `supabase/migrations/202603030004_project_workspace.sql`
+5. `supabase/migrations/202603030005_project_workspace_rls.sql`
+6. `supabase/migrations/202603040006_project_messages.sql`
+7. `supabase/migrations/202603040007_project_messages_rls.sql`
+8. `supabase/migrations/202603040008_notifications.sql`
+9. `supabase/migrations/202603040009_notifications_rls.sql`
+10. `supabase/migrations/202603040010_reminder_rules_and_history.sql`
+11. `supabase/migrations/202603040011_reminder_rules_and_history_rls.sql`
 
 ### 5. Edge Secrets setzen
 
@@ -162,6 +170,7 @@ Im Supabase Dashboard oder per CLI:
 4. `BREVO_SENDER_EMAIL` auf die Absenderadresse setzen.
 5. Optional: `BREVO_SENDER_NAME` fuer den sichtbaren Absendernamen setzen.
 6. Optional: `BREVO_NOTIFICATION_EMAIL` fuer interne Projektbenachrichtigungen setzen.
+7. `REMINDER_CRON_SECRET` fuer gesicherte Reminder-Cron-Aufrufe setzen.
 
 Beispiel per CLI:
 
@@ -172,7 +181,8 @@ supabase secrets set \
   BREVO_API_KEY=... \
   BREVO_SENDER_EMAIL=... \
   BREVO_SENDER_NAME="abgelichtet.ch" \
-  BREVO_NOTIFICATION_EMAIL=...
+  BREVO_NOTIFICATION_EMAIL=... \
+  REMINDER_CRON_SECRET=...
 ```
 
 ### 6. Edge Functions deployen
@@ -182,6 +192,7 @@ supabase functions deploy invite-user
 supabase functions deploy log-activity
 supabase functions deploy impersonate-client
 supabase functions deploy send-project-email
+supabase functions deploy check-reminders
 ```
 
 ### 7. Frontend lokal starten
@@ -217,6 +228,15 @@ VITE_SUPABASE_ANON_KEY=
 3. Build Command: `npm run build`
 4. Output Directory: `dist`
 
+### 10. Reminder Cron einrichten
+
+In Supabase unter `Edge Functions > check-reminders > Schedules`:
+
+1. Cron: `0 * * * *`
+2. Methode: `POST`
+3. Header setzen:
+   - `x-reminder-secret: <REMINDER_CRON_SECRET>`
+
 ## Hinweise
 
 - Invite Flow:
@@ -232,4 +252,5 @@ VITE_SUPABASE_ANON_KEY=
   - Sicherheitsrelevante Aktionen werden zusaetzlich in `audit_log` geschrieben.
 - Projekt-E-Mails:
   - Edge Function `send-project-email` versendet Brevo-Mails fuer `Projekt erstellt`, `Abnahme angefordert`, `Aenderungen angefordert` und `Abgenommen`.
+  - Reminder-Ereignisse `approval_reminder` und `feedback_reminder` werden ebenfalls ueber `send-project-email` versendet.
   - Mail-Fehler blockieren keine Business-Flows.

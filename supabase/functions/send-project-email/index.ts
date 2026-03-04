@@ -4,10 +4,17 @@ export const config = {
 
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.52.1";
 import { createJsonResponse, handleOptions } from "../_shared/cors.ts";
-import { requireAuthenticatedUser } from "../_shared/auth.ts";
+import { createServiceClient, requireAuthenticatedUser } from "../_shared/auth.ts";
 import { sendBrevoEmail } from "../_shared/brevo.ts";
 
-type ProjectEmailEvent = "project_created" | "approval_requested" | "approved" | "changes_requested" | "chat_message_sent";
+type ProjectEmailEvent =
+  | "project_created"
+  | "approval_requested"
+  | "approved"
+  | "changes_requested"
+  | "chat_message_sent"
+  | "approval_reminder"
+  | "feedback_reminder";
 
 interface SendProjectEmailBody {
   comment?: string;
@@ -23,6 +30,14 @@ interface ProjectEmailContext {
 }
 
 const portalBaseUrl = "https://portal.abgelichtet.ch";
+const reminderEventTypes = new Set<ProjectEmailEvent>(["approval_reminder", "feedback_reminder"]);
+
+function hasValidReminderSecret(req: Request): boolean {
+  const expectedSecret = Deno.env.get("REMINDER_CRON_SECRET")?.trim();
+  const providedSecret = req.headers.get("x-reminder-secret")?.trim();
+
+  return Boolean(expectedSecret && providedSecret && expectedSecret === providedSecret);
+}
 
 function escapeHtml(value: string): string {
   return value
@@ -113,6 +128,18 @@ function buildEmailContent(type: ProjectEmailEvent, context: ProjectEmailContext
         subject: `Neue Chat-Nachricht im Projekt: ${context.projectTitle}`,
         text: `Hoi ${context.clientName},\n\nes gibt eine neue Nachricht im Projekt:\n\n"${comment ?? ""}"\n\nProjekt öffnen:\n${projectUrl}\n\nLiebe Grüsse\nabgelichtet.ch`,
       };
+    case "approval_reminder":
+      return {
+        html: `<p>Hoi ${safeClientName},</p><p>wir warten noch auf dein Feedback zum Projekt <strong>${safeProjectTitle}</strong>.</p><p>Projekt öffnen:</p><p><a href="${projectUrl}">${projectUrl}</a></p><p>Liebe Grüsse<br />abgelichtet.ch</p>`,
+        subject: `Reminder: Feedback zum Projekt "${context.projectTitle}"`,
+        text: `Hoi ${context.clientName},\n\nwir warten noch auf dein Feedback zum Projekt "${context.projectTitle}".\n\nProjekt öffnen:\n${projectUrl}\n\nLiebe Grüsse\nabgelichtet.ch`,
+      };
+    case "feedback_reminder":
+      return {
+        html: `<p>Hoi ${safeClientName},</p><p>wir warten noch auf deine Rückmeldung zu den angeforderten Änderungen im Projekt <strong>${safeProjectTitle}</strong>.</p><p>Projekt öffnen:</p><p><a href="${projectUrl}">${projectUrl}</a></p><p>Liebe Grüsse<br />abgelichtet.ch</p>`,
+        subject: `Reminder: Rückmeldung zum Projekt "${context.projectTitle}"`,
+        text: `Hoi ${context.clientName},\n\nwir warten noch auf deine Rückmeldung zu den angeforderten Änderungen im Projekt "${context.projectTitle}".\n\nProjekt öffnen:\n${projectUrl}\n\nLiebe Grüsse\nabgelichtet.ch`,
+      };
   }
 }
 
@@ -128,33 +155,50 @@ Deno.serve(async (req) => {
       return createJsonResponse(origin, { error: "Method not allowed." }, 405);
     }
 
-    const { actorRole, serviceClient, user } = await requireAuthenticatedUser(req);
     const body = (await req.json()) as SendProjectEmailBody;
     const type = body.type;
     const projectId = body.projectId?.trim();
     const comment = body.comment?.trim() || undefined;
+    const isReminderEvent = type ? reminderEventTypes.has(type) : false;
 
     if (!type || !projectId) {
       return createJsonResponse(origin, { error: "type and projectId are required." }, 400);
     }
 
-    if ((type === "project_created" || type === "approval_requested") && actorRole !== "admin") {
-      return createJsonResponse(origin, { error: "Admin role required for this email." }, 403);
+    let actorRole: string = "admin";
+    let serviceClient: SupabaseClient;
+    let userId = "";
+
+    if (isReminderEvent) {
+      if (!hasValidReminderSecret(req)) {
+        return createJsonResponse(origin, { error: "Invalid reminder secret." }, 401);
+      }
+
+      serviceClient = createServiceClient();
+    } else {
+      const context = await requireAuthenticatedUser(req);
+      actorRole = context.actorRole;
+      serviceClient = context.serviceClient;
+      userId = context.user.id;
+
+      if ((type === "project_created" || type === "approval_requested") && actorRole !== "admin") {
+        return createJsonResponse(origin, { error: "Admin role required for this email." }, 403);
+      }
+
+      if ((type === "approved" || type === "changes_requested") && actorRole !== "client") {
+        return createJsonResponse(origin, { error: "Client role required for this email." }, 403);
+      }
+
+      if (type === "changes_requested" && !comment) {
+        return createJsonResponse(origin, { error: "Comment is required for changes_requested." }, 400);
+      }
     }
 
-    if ((type === "approved" || type === "changes_requested") && actorRole !== "client") {
-      return createJsonResponse(origin, { error: "Client role required for this email." }, 403);
-    }
-
-    if (type === "changes_requested" && !comment) {
-      return createJsonResponse(origin, { error: "Comment is required for changes_requested." }, 400);
-    }
-
-    const context = await getProjectEmailContext(projectId, user.id, actorRole, serviceClient);
+    const context = await getProjectEmailContext(projectId, userId, actorRole, serviceClient);
     const content = buildEmailContent(type, context, comment);
 
     const recipients =
-      type === "project_created" || type === "approval_requested"
+      type === "project_created" || type === "approval_requested" || type === "approval_reminder" || type === "feedback_reminder"
         ? [{ email: context.clientEmail, name: context.clientName }]
         : type === "chat_message_sent"
           ? [
