@@ -18,7 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { FileUploadCard } from "@/components/files/FileUploadCard";
 import { ProjectForm } from "@/components/projects/ProjectForm";
 import { formatBytes, formatDate } from "@/lib/utils";
-import type { Client, ProjectFile, ProjectFormValues } from "@/types/app";
+import type { Client, ProjectFile, ProjectFileFolderKey, ProjectFormValues } from "@/types/app";
 import type { ProjectWithClient } from "@/api/projects";
 
 interface ProjectOverviewTabProps {
@@ -29,7 +29,7 @@ interface ProjectOverviewTabProps {
   onDeleteFile: (file: ProjectFile) => Promise<void>;
   onDownloadFile: (file: ProjectFile) => Promise<void>;
   onSave: (values: ProjectFormValues) => Promise<void>;
-  onUploadFile: (file: File) => Promise<void>;
+  onUploadFile: (file: File, folder: ProjectFileFolderKey) => Promise<void>;
   project: ProjectWithClient;
 }
 

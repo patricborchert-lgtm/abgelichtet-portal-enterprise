@@ -35,6 +35,7 @@ import type {
   MilestoneStatus,
   MessageFormValues,
   ProjectFile,
+  ProjectFileFolderKey,
   ProjectFormValues,
   ProjectStatus,
   TimelineEventFormValues,
@@ -308,7 +309,7 @@ export function ProjectDetailsPage() {
     }
   }
 
-  async function handleUpload(file: File) {
+  async function handleUpload(file: File, folder: ProjectFileFolderKey) {
     if (!user) {
       throw new Error("Keine aktive Session.");
     }
@@ -316,6 +317,7 @@ export function ProjectDetailsPage() {
     const uploaded = await uploadProjectFile({
       clientId: project.client_id,
       file,
+      folder,
       projectId,
       userId: user.id,
     });
@@ -323,12 +325,13 @@ export function ProjectDetailsPage() {
     logActivitySafely({
       action: "file_uploaded",
       entityId: uploaded.id,
-      entityType: "project_file",
-      metadata: {
-        filename: uploaded.filename,
-        project_id: projectId,
-      },
-    });
+        entityType: "project_file",
+        metadata: {
+          filename: uploaded.filename,
+          folder,
+          project_id: projectId,
+        },
+      });
 
     await queryClient.invalidateQueries({ queryKey: ["project-files", projectId] });
   }

@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { STORAGE_BUCKET } from "@/lib/constants";
 import { assertSuccess } from "@/lib/errors";
 import { buildStoragePath } from "@/lib/storage";
-import type { ProjectFile } from "@/types/app";
+import type { ProjectFile, ProjectFileFolderKey } from "@/types/app";
 
 export async function listProjectFiles(projectId: string): Promise<ProjectFile[]> {
   const result = await supabase
@@ -17,10 +17,11 @@ export async function listProjectFiles(projectId: string): Promise<ProjectFile[]
 export async function uploadProjectFile(options: {
   clientId: string;
   file: File;
+  folder: ProjectFileFolderKey;
   projectId: string;
   userId: string;
 }): Promise<ProjectFile> {
-  const storagePath = buildStoragePath(options.clientId, options.projectId, options.file.name);
+  const storagePath = buildStoragePath(options.clientId, options.projectId, options.folder, options.file.name);
 
   const uploadResult = await supabase.storage.from(STORAGE_BUCKET).upload(storagePath, options.file, {
     cacheControl: "3600",

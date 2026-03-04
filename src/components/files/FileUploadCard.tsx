@@ -1,17 +1,23 @@
 import { useState, type ChangeEvent } from "react";
 import { toast } from "sonner";
 import { Upload } from "lucide-react";
+import { PROJECT_FILE_FOLDERS, UPLOAD_FILE_HINT } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getErrorMessage } from "@/lib/errors";
+import { isAllowedUploadFile } from "@/lib/storage";
+import type { ProjectFileFolderKey } from "@/types/app";
 
 interface FileUploadCardProps {
   disabled?: boolean;
-  onUpload: (file: File) => Promise<void>;
+  onUpload: (file: File, folder: ProjectFileFolderKey) => Promise<void>;
 }
 
 export function FileUploadCard({ disabled = false, onUpload }: FileUploadCardProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [folder, setFolder] = useState<ProjectFileFolderKey>("briefing-inhalte");
 
   async function handleChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -20,10 +26,16 @@ export function FileUploadCard({ disabled = false, onUpload }: FileUploadCardPro
       return;
     }
 
+    if (!isAllowedUploadFile(file.name)) {
+      toast.error("Dieses Dateiformat ist nicht erlaubt.");
+      event.target.value = "";
+      return;
+    }
+
     setIsUploading(true);
 
     try {
-      await onUpload(file);
+      await onUpload(file, folder);
       toast.success("Datei erfolgreich hochgeladen.");
       event.target.value = "";
     } catch (error) {
@@ -53,11 +65,26 @@ export function FileUploadCard({ disabled = false, onUpload }: FileUploadCardPro
         <div className="rounded-2xl border border-dashed border-[#8F87F1]/30 bg-[linear-gradient(180deg,rgba(143,135,241,0.06)_0%,rgba(255,255,255,1)_55%)] p-5">
           <p className="text-sm font-medium text-slate-800">Datei hinzufügen</p>
           <p className="mt-1 text-sm leading-6 text-slate-500">
-            Wähle eine Datei aus und lade sie direkt in dieses Projekt hoch.
+            Wähle einen Ordner aus und lade deine Datei direkt in dieses Projekt hoch.
           </p>
           <p className="mt-3 text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
-            Erlaubte Formate: JPG, PNG, SVG, EPS, AI, DOCX, XLSX, MP4, MPEG
+            {UPLOAD_FILE_HINT}
           </p>
+        </div>
+        <div className="space-y-2">
+          <Label>Dateiordner</Label>
+          <Select onValueChange={(value) => setFolder(value as ProjectFileFolderKey)} value={folder}>
+            <SelectTrigger className="border-slate-200 bg-slate-50/70">
+              <SelectValue placeholder="Ordner wählen" />
+            </SelectTrigger>
+            <SelectContent>
+              {PROJECT_FILE_FOLDERS.map((entry) => (
+                <SelectItem key={entry.value} value={entry.value}>
+                  {entry.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex flex-col gap-3 md:flex-row md:items-center">
           <Button
@@ -66,7 +93,7 @@ export function FileUploadCard({ disabled = false, onUpload }: FileUploadCardPro
             disabled={disabled || isUploading}
           >
             <label className="cursor-pointer">
-            <Upload className="h-4 w-4" />
+              <Upload className="h-4 w-4" />
               {isUploading ? "Upload läuft..." : "Datei auswählen"}
               <input className="hidden" onChange={(event) => void handleChange(event)} type="file" />
             </label>

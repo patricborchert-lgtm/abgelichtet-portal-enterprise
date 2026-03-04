@@ -1,5 +1,8 @@
 import { LOCAL_STORAGE_KEYS } from "@/lib/constants";
 
+import { ALLOWED_UPLOAD_EXTENSIONS } from "@/lib/constants";
+import type { ProjectFileFolderKey } from "@/types/app";
+
 export interface StoredImpersonationSession {
   adminAccessToken: string;
   adminRefreshToken: string;
@@ -17,8 +20,23 @@ export function sanitizeFilename(filename: string): string {
     .toLowerCase();
 }
 
-export function buildStoragePath(clientId: string, projectId: string, filename: string): string {
-  return `${clientId}/${projectId}/${Date.now()}-${sanitizeFilename(filename)}`;
+export function buildStoragePath(
+  clientId: string,
+  projectId: string,
+  folder: ProjectFileFolderKey,
+  filename: string,
+): string {
+  return `${clientId}/${projectId}/${folder}/${Date.now()}-${sanitizeFilename(filename)}`;
+}
+
+export function getFileExtension(filename: string): string {
+  const extension = filename.split(".").pop();
+  return extension ? extension.toLowerCase() : "";
+}
+
+export function isAllowedUploadFile(filename: string): boolean {
+  const extension = getFileExtension(filename);
+  return ALLOWED_UPLOAD_EXTENSIONS.includes(extension as (typeof ALLOWED_UPLOAD_EXTENSIONS)[number]);
 }
 
 export function persistImpersonationSession(payload: StoredImpersonationSession): void {

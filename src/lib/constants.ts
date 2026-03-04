@@ -1,4 +1,4 @@
-import type { ProjectStatus, Role } from "@/types/app";
+import type { ProjectFileFolderKey, ProjectStatus, Role } from "@/types/app";
 
 export const APP_NAME = "abgelichtet Portal Enterprise";
 
@@ -24,5 +24,30 @@ export const PROJECT_STATUS_OPTIONS: Array<{
   { value: "delivered", label: "Delivered", description: "Projekt wurde ausgeliefert." },
   { value: "archived", label: "Archived", description: "Projekt ist archiviert." },
 ];
+
+export const PROJECT_FILE_FOLDERS: Array<{ label: string; value: ProjectFileFolderKey }> = [
+  { value: "briefing-inhalte", label: "Briefing & Inhalte" },
+  { value: "medien-vom-kunden", label: "Medien vom Kunden" },
+  { value: "entwuerfe", label: "Entwürfe" },
+  { value: "final", label: "Final" },
+];
+
+export const ALLOWED_UPLOAD_EXTENSIONS = [
+  "jpg",
+  "jpeg",
+  "png",
+  "svg",
+  "eps",
+  "ai",
+  "pdf",
+  "doc",
+  "docx",
+  "xls",
+  "xlsx",
+  "mp4",
+  "mpeg",
+] as const;
+
+export const UPLOAD_FILE_HINT = "Erlaubte Formate: JPG, PNG, SVG, EPS, AI, DOCX, XLSX, MP4, MPEG";
 
 export const PAGE_SIZE = 10;

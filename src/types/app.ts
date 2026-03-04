@@ -17,6 +17,7 @@ export type MilestoneStatus = Database["public"]["Tables"]["milestones"]["Row"][
 export type TimelineEventType = Database["public"]["Tables"]["timeline_events"]["Row"]["event_type"];
 export type ApprovalStatus = Database["public"]["Tables"]["approvals"]["Row"]["status"];
 export type ProjectTemplateKey = "website" | "seo" | "photography";
+export type ProjectFileFolderKey = "briefing-inhalte" | "medien-vom-kunden" | "entwuerfe" | "final";
 
 export interface ClientFormValues {
   company: string;
@@ -67,6 +68,11 @@ export interface ProjectTemplateOption {
   description: string;
   label: string;
   value: ProjectTemplateKey;
+}
+
+export interface ProjectFileFolderOption {
+  label: string;
+  value: ProjectFileFolderKey;
 }
 
 export interface InviteUserResponse {
