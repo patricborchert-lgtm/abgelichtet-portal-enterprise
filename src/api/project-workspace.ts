@@ -6,9 +6,24 @@ import type {
   Milestone,
   MilestoneFormValues,
   MilestoneStatus,
+  ProjectTemplateKey,
   TimelineEvent,
   TimelineEventFormValues,
 } from "@/types/app";
+
+const PROJECT_MILESTONE_TEMPLATES: Record<ProjectTemplateKey, string[]> = {
+  photography: ["Briefing", "Shooting", "Vorauswahl", "Bildbearbeitung", "Abnahme", "Lieferung"],
+  seo: ["Analyse", "Keyword-Strategie", "OnPage Optimierung", "Content", "Monitoring", "Reporting"],
+  website: [
+    "Briefing erhalten",
+    "Struktur & Konzept",
+    "Design-Entwurf",
+    "Umsetzung",
+    "Inhalte einpflegen",
+    "Abnahme",
+    "Livegang",
+  ],
+};
 
 export async function listProjectMilestones(projectId: string): Promise<Milestone[]> {
   const result = await supabase
@@ -34,6 +49,17 @@ export async function createProjectMilestone(projectId: string, values: Mileston
     .single();
 
   return assertSuccess(result, "Meilenstein konnte nicht erstellt werden.");
+}
+
+export async function createProjectMilestoneTemplate(projectId: string, templateKey: ProjectTemplateKey): Promise<Milestone[]> {
+  const milestones = PROJECT_MILESTONE_TEMPLATES[templateKey].map((title, index) => ({
+    project_id: projectId,
+    sort_order: index,
+    title,
+  }));
+
+  const result = await supabase.from("milestones").insert(milestones).select("*");
+  return assertSuccess(result, "Standard-Meilensteine konnten nicht erstellt werden.");
 }
 
 export async function updateProjectMilestone(

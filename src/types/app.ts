@@ -12,9 +12,11 @@ export type AuditLog = Database["public"]["Tables"]["audit_log"]["Row"];
 export type Milestone = Database["public"]["Tables"]["milestones"]["Row"];
 export type TimelineEvent = Database["public"]["Tables"]["timeline_events"]["Row"];
 export type Approval = Database["public"]["Tables"]["approvals"]["Row"];
+export type ProjectMessage = Database["public"]["Tables"]["messages"]["Row"];
 export type MilestoneStatus = Database["public"]["Tables"]["milestones"]["Row"]["status"];
 export type TimelineEventType = Database["public"]["Tables"]["timeline_events"]["Row"]["event_type"];
 export type ApprovalStatus = Database["public"]["Tables"]["approvals"]["Row"]["status"];
+export type ProjectTemplateKey = "website" | "seo" | "photography";
 
 export interface ClientFormValues {
   company: string;
@@ -27,6 +29,7 @@ export interface ClientFormValues {
 export interface ProjectFormValues {
   clientId: string;
   description: string;
+  templateKey?: ProjectTemplateKey | "";
   status: ProjectStatus;
   title: string;
 }
@@ -53,6 +56,17 @@ export interface TimelineEventFormValues {
 export interface ApprovalDecisionValues {
   comment: string;
   status: Extract<ApprovalStatus, "approved" | "changes_requested">;
+}
+
+export interface MessageFormValues {
+  authorLabel: string;
+  body: string;
+}
+
+export interface ProjectTemplateOption {
+  description: string;
+  label: string;
+  value: ProjectTemplateKey;
 }
 
 export interface InviteUserResponse {

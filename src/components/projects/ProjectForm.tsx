@@ -6,19 +6,39 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { PROJECT_STATUS_OPTIONS } from "@/lib/constants";
-import type { Client, ProjectFormValues } from "@/types/app";
+import type { Client, ProjectFormValues, ProjectTemplateOption } from "@/types/app";
 
 interface ProjectFormProps {
   clientOptions: Client[];
   defaultValues?: ProjectFormValues;
   isSubmitting?: boolean;
   onSubmit: (values: ProjectFormValues) => Promise<void>;
+  showTemplateSelector?: boolean;
   submitLabel: string;
 }
+
+const PROJECT_TEMPLATE_OPTIONS: ProjectTemplateOption[] = [
+  {
+    value: "website",
+    label: "Website",
+    description: "Briefing, Konzept, Design, Umsetzung, Inhalte, Abnahme und Livegang.",
+  },
+  {
+    value: "seo",
+    label: "SEO",
+    description: "Analyse, Strategie, OnPage, Content, Monitoring und Reporting.",
+  },
+  {
+    value: "photography",
+    label: "Fotografie",
+    description: "Briefing, Shooting, Auswahl, Bearbeitung, Abnahme und Lieferung.",
+  },
+];
 
 const initialValues: ProjectFormValues = {
   clientId: "",
   description: "",
+  templateKey: "",
   status: "planned",
   title: "",
 };
@@ -28,6 +48,7 @@ export function ProjectForm({
   defaultValues,
   isSubmitting = false,
   onSubmit,
+  showTemplateSelector = false,
   submitLabel,
 }: ProjectFormProps) {
   const [values, setValues] = useState<ProjectFormValues>(defaultValues ?? initialValues);
@@ -98,6 +119,28 @@ export function ProjectForm({
               </SelectContent>
             </Select>
           </div>
+          {showTemplateSelector ? (
+            <div className="space-y-2 md:col-span-2">
+              <Label className="text-slate-700">Meilenstein-Vorlage</Label>
+              <Select onValueChange={(value) => updateValue("templateKey", value as ProjectFormValues["templateKey"])} value={values.templateKey ?? ""}>
+                <SelectTrigger className="border-slate-200 bg-slate-50/70">
+                  <SelectValue placeholder="Vorlage wählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROJECT_TEMPLATE_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-sm leading-6 text-slate-500">
+                {values.templateKey
+                  ? PROJECT_TEMPLATE_OPTIONS.find((option) => option.value === values.templateKey)?.description
+                  : "Optional: Lege direkt passende Standard-Meilensteine für dieses Projekt an."}
+              </p>
+            </div>
+          ) : null}
           <div className="space-y-2 md:col-span-2">
             <Label className="text-slate-700" htmlFor="description">
               Beschreibung

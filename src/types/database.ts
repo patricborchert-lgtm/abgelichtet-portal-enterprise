@@ -221,6 +221,32 @@ export interface Database {
           title?: string;
         };
       };
+      messages: {
+        Row: {
+          author_id: string | null;
+          author_label: string;
+          body: string;
+          created_at: string;
+          id: string;
+          project_id: string;
+        };
+        Insert: {
+          author_id?: string | null;
+          author_label: string;
+          body: string;
+          created_at?: string;
+          id?: string;
+          project_id: string;
+        };
+        Update: {
+          author_id?: string | null;
+          author_label?: string;
+          body?: string;
+          created_at?: string;
+          id?: string;
+          project_id?: string;
+        };
+      };
       projects: {
         Row: {
           client_id: string;

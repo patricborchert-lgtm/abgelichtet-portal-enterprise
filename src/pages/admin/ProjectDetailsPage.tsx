@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { logActivity } from "@/api/activity";
 import { deleteProjectFile, getProjectFileDownloadUrl, listProjectFiles, uploadProjectFile } from "@/api/files";
+import { createProjectMessage, listProjectMessages } from "@/api/project-messages";
 import { getProjectDetails, listClientOptions, updateProject } from "@/api/projects";
 import {
   createProjectMilestone,
@@ -18,6 +19,7 @@ import { ErrorState } from "@/components/common/ErrorState";
 import { LoadingTable } from "@/components/common/LoadingTable";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { ProjectApprovalsTab } from "@/components/projects/ProjectApprovalsTab";
+import { ProjectChatTab } from "@/components/projects/ProjectChatTab";
 import { ProjectMilestonesTab } from "@/components/projects/ProjectMilestonesTab";
 import { ProjectOverviewTab } from "@/components/projects/ProjectOverviewTab";
 import { ProjectTabs } from "@/components/projects/ProjectTabs";
@@ -31,6 +33,7 @@ import type {
   Milestone,
   MilestoneFormValues,
   MilestoneStatus,
+  MessageFormValues,
   ProjectFile,
   ProjectFormValues,
   ProjectStatus,
@@ -38,7 +41,7 @@ import type {
 } from "@/types/app";
 import { useParams } from "react-router-dom";
 
-type ProjectDetailTab = "overview" | "timeline" | "milestones" | "approvals";
+type ProjectDetailTab = "overview" | "timeline" | "chat" | "milestones" | "approvals";
 
 function getProgressFromStatus(status: ProjectStatus): number {
   switch (status) {
@@ -80,6 +83,12 @@ export function ProjectDetailsPage() {
     enabled: Boolean(projectId),
     queryFn: () => listProjectTimeline(projectId),
     queryKey: ["project-timeline", projectId],
+  });
+
+  const messagesQuery = useQuery({
+    enabled: Boolean(projectId),
+    queryFn: () => listProjectMessages(projectId),
+    queryKey: ["project-messages", projectId],
   });
 
   const milestonesQuery = useQuery({
@@ -175,6 +184,28 @@ export function ProjectDetailsPage() {
     },
   });
 
+  const messageMutation = useMutation({
+    mutationFn: (values: MessageFormValues) => {
+      if (!user) {
+        throw new Error("Keine aktive Session.");
+      }
+
+      return createProjectMessage(projectId, user.id, values);
+    },
+    onSuccess: async (message) => {
+      logActivitySafely({
+        action: "message_created",
+        entityId: message.id,
+        entityType: "message",
+        metadata: {
+          project_id: projectId,
+        },
+      });
+      await queryClient.invalidateQueries({ queryKey: ["project-messages", projectId] });
+      toast.success("Nachricht gesendet.");
+    },
+  });
+
   const updateMilestoneMutation = useMutation({
     mutationFn: ({ milestone, status }: { milestone: Milestone; status: MilestoneStatus }) =>
       updateProjectMilestone(milestone.id, { status }),
@@ -237,6 +268,7 @@ export function ProjectDetailsPage() {
     projectQuery.isLoading ||
     filesQuery.isLoading ||
     timelineQuery.isLoading ||
+    messagesQuery.isLoading ||
     milestonesQuery.isLoading ||
     approvalsQuery.isLoading ||
     (isAdmin && clientOptionsQuery.isLoading);
@@ -249,6 +281,7 @@ export function ProjectDetailsPage() {
     projectQuery.isError ||
     filesQuery.isError ||
     timelineQuery.isError ||
+    messagesQuery.isError ||
     milestonesQuery.isError ||
     approvalsQuery.isError ||
     (isAdmin && clientOptionsQuery.isError) ||
@@ -261,6 +294,7 @@ export function ProjectDetailsPage() {
   const project = projectQuery.data.project;
   const files = filesQuery.data ?? [];
   const timelineEvents = timelineQuery.data ?? [];
+  const messages = messagesQuery.data ?? [];
   const milestones = milestonesQuery.data ?? [];
   const approvals = approvalsQuery.data ?? [];
   const clientOptions = clientOptionsQuery.data ?? [];
@@ -336,6 +370,17 @@ export function ProjectDetailsPage() {
       });
     } catch (error) {
       toast.error(getErrorMessage(error, "Timeline-Eintrag konnte nicht erstellt werden."));
+    }
+  }
+
+  async function handleSendMessage(body: string) {
+    try {
+      await messageMutation.mutateAsync({
+        authorLabel: getAuthorLabel(),
+        body,
+      });
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Nachricht konnte nicht gesendet werden."));
     }
   }
 
@@ -422,6 +467,7 @@ export function ProjectDetailsPage() {
   const tabs = [
     { key: "overview", label: "Übersicht" },
     { badge: timelineEvents.length, key: "timeline", label: "Timeline" },
+    { badge: messages.length, key: "chat", label: "Chat" },
     { badge: milestones.length, key: "milestones", label: "Meilensteine" },
     { badge: approvals.length, key: "approvals", label: "Abnahme" },
   ] satisfies { badge?: number; key: ProjectDetailTab; label: string }[];
@@ -514,6 +560,10 @@ export function ProjectDetailsPage() {
 
       {activeTab === "timeline" ? (
         <ProjectTimelineTab events={timelineEvents} isSubmitting={timelineMutation.isPending} onSubmit={handleCreateTimeline} />
+      ) : null}
+
+      {activeTab === "chat" ? (
+        <ProjectChatTab isSubmitting={messageMutation.isPending} messages={messages} onSubmit={handleSendMessage} />
       ) : null}
 
       {activeTab === "milestones" ? (
