@@ -63,7 +63,7 @@ export function ProjectApprovalsTab({
   const pendingApproval = useMemo(() => approvals.find((approval) => approval.status === "pending") ?? null, [approvals]);
   const latestApproval = approvals[0] ?? null;
   const selectedStep = APPROVAL_STEP_OPTIONS.find((option) => option.value === requestStep) ?? APPROVAL_STEP_OPTIONS[0];
-  const canRequestApproval = isAdmin && (projectStatus === "review" || projectStatus === "delivered") && !pendingApproval;
+  const canRequestApproval = isAdmin && !pendingApproval;
 
   async function handleRequestApproval() {
     await onRequestApproval({
@@ -119,7 +119,7 @@ export function ProjectApprovalsTab({
               <div className="space-y-1">
                 <h3 className="text-sm font-semibold text-slate-900">Abnahme anfragen</h3>
                 <p className="text-sm text-slate-500">
-                  Setze den Projektstatus auf „Feedback benötigt“ oder „Bereit zur Abnahme“, damit die Anfrage sauber nachvollziehbar bleibt.
+                  Wähle den passenden Step und sende die Anfrage direkt an den Kunden.
                 </p>
               </div>
               <div className="space-y-2">
@@ -154,7 +154,7 @@ export function ProjectApprovalsTab({
                 <p className="text-xs text-slate-500">
                   {pendingApproval
                     ? "Es gibt bereits eine offene Abnahmeanfrage."
-                    : "Die Anfrage ist erst möglich, wenn der Status auf „Feedback benötigt“ oder „Bereit zur Abnahme“ steht."}
+                    : "Die Anfrage ist aktuell nicht möglich."}
                 </p>
               ) : null}
             </div>
