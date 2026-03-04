@@ -158,6 +158,22 @@ Im Supabase Dashboard oder per CLI:
 
 1. `SUPABASE_URL` auf die Project URL setzen.
 2. `SUPABASE_SERVICE_ROLE_KEY` auf den Service Role Key setzen.
+3. `BREVO_API_KEY` auf den Brevo API Key setzen.
+4. `BREVO_SENDER_EMAIL` auf die Absenderadresse setzen.
+5. Optional: `BREVO_SENDER_NAME` fuer den sichtbaren Absendernamen setzen.
+6. Optional: `BREVO_NOTIFICATION_EMAIL` fuer interne Projektbenachrichtigungen setzen.
+
+Beispiel per CLI:
+
+```bash
+supabase secrets set \
+  SUPABASE_URL=... \
+  SUPABASE_SERVICE_ROLE_KEY=... \
+  BREVO_API_KEY=... \
+  BREVO_SENDER_EMAIL=... \
+  BREVO_SENDER_NAME="abgelichtet.ch" \
+  BREVO_NOTIFICATION_EMAIL=...
+```
 
 ### 6. Edge Functions deployen
 
@@ -165,6 +181,7 @@ Im Supabase Dashboard oder per CLI:
 supabase functions deploy invite-user
 supabase functions deploy log-activity
 supabase functions deploy impersonate-client
+supabase functions deploy send-project-email
 ```
 
 ### 7. Frontend lokal starten
@@ -213,3 +230,6 @@ VITE_SUPABASE_ANON_KEY=
 - Logging:
   - UI-Events schreiben ueber `log-activity` in `activity_log`.
   - Sicherheitsrelevante Aktionen werden zusaetzlich in `audit_log` geschrieben.
+- Projekt-E-Mails:
+  - Edge Function `send-project-email` versendet Brevo-Mails fuer `Projekt erstellt`, `Abnahme angefordert`, `Aenderungen angefordert` und `Abgenommen`.
+  - Mail-Fehler blockieren keine Business-Flows.

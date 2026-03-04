@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { logActivity } from "@/api/activity";
+import { sendProjectEmail } from "@/api/emails";
 import { deleteProjectFile, getProjectFileDownloadUrl, listProjectFiles, uploadProjectFile } from "@/api/files";
 import { createProjectMessage, listProjectMessages } from "@/api/project-messages";
 import { getProjectDetails, listClientOptions, updateProject } from "@/api/projects";
@@ -116,6 +117,23 @@ export function ProjectDetailsPage() {
         await logActivity(payload);
       } catch {
         // Logging must never block business flows.
+      }
+    })();
+  }
+
+  function sendProjectEmailSafely(
+    type: "approval_requested" | "approved" | "changes_requested",
+    comment?: string,
+  ): void {
+    void (async () => {
+      try {
+        await sendProjectEmail({
+          comment,
+          projectId,
+          type,
+        });
+      } catch {
+        // Email delivery must never block business flows.
       }
     })();
   }
@@ -431,6 +449,7 @@ export function ProjectDetailsPage() {
   async function handleRequestApproval(message: string) {
     try {
       await requestApprovalMutation.mutateAsync(message);
+      sendProjectEmailSafely("approval_requested", message || undefined);
       await appendSupportingTimelineEvent({
         authorLabel: getAuthorLabel(),
         eventType: "approval_requested",
@@ -454,6 +473,7 @@ export function ProjectDetailsPage() {
         approvalId: pendingApproval.id,
         values,
       });
+      sendProjectEmailSafely(values.status, values.comment || undefined);
       await appendSupportingTimelineEvent({
         authorLabel: getAuthorLabel(),
         eventType: values.status,

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { logActivity } from "@/api/activity";
+import { sendProjectEmail } from "@/api/emails";
 import { createProject, listClientOptions } from "@/api/projects";
 import { createProjectMilestoneTemplate } from "@/api/project-workspace";
 import { ErrorState } from "@/components/common/ErrorState";
@@ -21,6 +22,16 @@ export function NewProjectPage() {
         await logActivity(payload);
       } catch {
         // Logging must never block business flows.
+      }
+    })();
+  }
+
+  function sendProjectEmailSafely(projectId: string, type: "project_created"): void {
+    void (async () => {
+      try {
+        await sendProjectEmail({ projectId, type });
+      } catch {
+        // Email delivery must never block business flows.
       }
     })();
   }
@@ -65,6 +76,7 @@ export function NewProjectPage() {
           status: project.status,
         },
       });
+      sendProjectEmailSafely(project.id, "project_created");
 
       if (values.templateKey) {
         try {

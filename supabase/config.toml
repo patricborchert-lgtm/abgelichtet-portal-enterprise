@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.impersonate-client]
 verify_jwt = true
+
+[functions.send-project-email]
+verify_jwt = true

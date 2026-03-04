@@ -21,33 +21,48 @@ export function FileUploadCard({ disabled = false, onUpload }: FileUploadCardPro
   const [isDragActive, setIsDragActive] = useState(false);
   const [folder, setFolder] = useState<ProjectFileFolderKey>("briefing-inhalte");
 
-  async function processUpload(file: File, onDone?: () => void) {
-    if (!file) {
-      return;
-    }
-
-    if (!isAllowedUploadFile(file.name)) {
-      toast.error("Dieses Dateiformat ist nicht erlaubt.");
-      onDone?.();
+  async function processUpload(files: File[], onDone?: () => void) {
+    if (files.length === 0) {
       return;
     }
 
     setIsUploading(true);
 
     try {
-      await onUpload(file, folder);
-      toast.success("Datei erfolgreich hochgeladen.");
+      let uploadedCount = 0;
+      let failedCount = 0;
+
+      for (const file of files) {
+        if (!isAllowedUploadFile(file.name)) {
+          failedCount += 1;
+          toast.error(`"${file.name}" ist kein erlaubtes Dateiformat.`);
+          continue;
+        }
+
+        try {
+          await onUpload(file, folder);
+          uploadedCount += 1;
+        } catch (error) {
+          failedCount += 1;
+          toast.error(getErrorMessage(error, `„${file.name}“ konnte nicht hochgeladen werden.`));
+        }
+      }
+
+      if (uploadedCount > 0 && failedCount === 0) {
+        toast.success(uploadedCount === 1 ? "Datei erfolgreich hochgeladen." : `${uploadedCount} Dateien erfolgreich hochgeladen.`);
+      } else if (uploadedCount > 0 && failedCount > 0) {
+        toast.warning(`${uploadedCount} Dateien hochgeladen, ${failedCount} fehlgeschlagen.`);
+      }
+
       onDone?.();
-    } catch (error) {
-      toast.error(getErrorMessage(error, "Datei konnte nicht hochgeladen werden."));
     } finally {
       setIsUploading(false);
     }
   }
 
   async function handleChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    await processUpload(file, () => {
+    const files = Array.from(event.target.files ?? []);
+    await processUpload(files, () => {
       event.target.value = "";
     });
   }
@@ -76,8 +91,8 @@ export function FileUploadCard({ disabled = false, onUpload }: FileUploadCardPro
       return;
     }
 
-    const file = event.dataTransfer.files?.[0];
-    await processUpload(file);
+    const files = Array.from(event.dataTransfer.files ?? []);
+    await processUpload(files);
   }
 
   return (
@@ -140,8 +155,8 @@ export function FileUploadCard({ disabled = false, onUpload }: FileUploadCardPro
           >
             <label className="cursor-pointer">
               <Upload className="h-4 w-4" />
-              {isUploading ? "Upload läuft..." : "Datei auswählen"}
-              <input className="hidden" onChange={(event) => void handleChange(event)} type="file" />
+              {isUploading ? "Upload läuft..." : "Dateien auswählen"}
+              <input className="hidden" multiple onChange={(event) => void handleChange(event)} type="file" />
             </label>
           </Button>
         </div>
