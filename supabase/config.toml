@@ -1,13 +1,13 @@
-project_id = "tlgdwljkryepgogdtbf"
+project_id = "tlgdwlkjkyregpogdtbf"
 
 [functions.invite-user]
 verify_jwt = false
-
-[functions.log-activity]
-verify_jwt = true
 
 [functions.impersonate-client]
 verify_jwt = true
 
 [functions.send-project-email]
-verify_jwt = true
+verify_jwt = false
+
+[functions.log-activity]
+verify_jwt = false

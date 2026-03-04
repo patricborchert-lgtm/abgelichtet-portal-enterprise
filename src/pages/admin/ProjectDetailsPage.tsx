@@ -85,12 +85,14 @@ export function ProjectDetailsPage() {
     enabled: Boolean(projectId),
     queryFn: () => listProjectTimeline(projectId),
     queryKey: ["project-timeline", projectId],
+    refetchInterval: 5000,
   });
 
   const messagesQuery = useQuery({
     enabled: Boolean(projectId),
     queryFn: () => listProjectMessages(projectId),
     queryKey: ["project-messages", projectId],
+    refetchInterval: 5000,
   });
 
   const milestonesQuery = useQuery({
@@ -400,6 +402,16 @@ export function ProjectDetailsPage() {
         authorLabel: getAuthorLabel(),
         body,
       });
+
+      try {
+        await sendProjectEmail({
+          type: "chat_message_sent",
+          projectId,
+          comment: body,
+        });
+      } catch (error) {
+        console.error("Chat email failed", error);
+      }
     } catch (error) {
       toast.error(getErrorMessage(error, "Nachricht konnte nicht gesendet werden."));
     }

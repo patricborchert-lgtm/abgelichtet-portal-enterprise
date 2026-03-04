@@ -4,7 +4,8 @@ type ProjectEmailEvent =
   | "project_created"
   | "approval_requested"
   | "approved"
-  | "changes_requested";
+  | "changes_requested"
+  | "chat_message_sent";
 
 interface SendProjectEmailPayload {
   comment?: string;

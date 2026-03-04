@@ -1,9 +1,13 @@
+export const config = {
+  verify_jwt: false,
+};
+
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.52.1";
 import { createJsonResponse, handleOptions } from "../_shared/cors.ts";
 import { requireAuthenticatedUser } from "../_shared/auth.ts";
 import { sendBrevoEmail } from "../_shared/brevo.ts";
 
-type ProjectEmailEvent = "project_created" | "approval_requested" | "approved" | "changes_requested";
+type ProjectEmailEvent = "project_created" | "approval_requested" | "approved" | "changes_requested" | "chat_message_sent";
 
 interface SendProjectEmailBody {
   comment?: string;
@@ -103,6 +107,12 @@ function buildEmailContent(type: ProjectEmailEvent, context: ProjectEmailContext
         subject: `Änderungen angefordert: ${context.projectTitle}`,
         text: `Hallo abgelichtet.ch,\n\nfür das Projekt "${context.projectTitle}" wurden Änderungen angefordert.\n\nKommentar: ${comment ?? ""}\n\nProjekt öffnen: ${projectUrl}`,
       };
+    case "chat_message_sent":
+      return {
+        html: `<p>Hoi ${safeClientName},</p><p>es gibt eine neue Nachricht im Projekt:</p><p>"${safeComment}"</p><p>Projekt öffnen:</p><p><a href="${projectUrl}">${projectUrl}</a></p><p>Liebe Grüsse<br />abgelichtet.ch</p>`,
+        subject: `Neue Chat-Nachricht im Projekt: ${context.projectTitle}`,
+        text: `Hoi ${context.clientName},\n\nes gibt eine neue Nachricht im Projekt:\n\n"${comment ?? ""}"\n\nProjekt öffnen:\n${projectUrl}\n\nLiebe Grüsse\nabgelichtet.ch`,
+      };
   }
 }
 
@@ -146,13 +156,21 @@ Deno.serve(async (req) => {
     const recipients =
       type === "project_created" || type === "approval_requested"
         ? [{ email: context.clientEmail, name: context.clientName }]
-        : [{ email: Deno.env.get("BREVO_NOTIFICATION_EMAIL") ?? Deno.env.get("BREVO_SENDER_EMAIL")!, name: "abgelichtet.ch" }];
+        : type === "chat_message_sent"
+          ? [
+              { email: context.clientEmail, name: context.clientName },
+              {
+                email: Deno.env.get("BREVO_NOTIFICATION_EMAIL") ?? Deno.env.get("BREVO_SENDER_EMAIL")!,
+                name: "abgelichtet.ch",
+              },
+            ]
+          : [{ email: Deno.env.get("BREVO_NOTIFICATION_EMAIL") ?? Deno.env.get("BREVO_SENDER_EMAIL")!, name: "abgelichtet.ch" }];
 
     await sendBrevoEmail({
       htmlContent: content.html,
       subject: content.subject,
       textContent: content.text,
-      to: recipients,
+      to: recipients.filter((recipient, index, all) => all.findIndex((entry) => entry.email === recipient.email) === index),
     });
 
     return createJsonResponse(origin, { success: true });
