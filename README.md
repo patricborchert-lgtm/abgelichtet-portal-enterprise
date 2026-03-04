@@ -159,6 +159,8 @@ Im Supabase SQL Editor in dieser Reihenfolge ausfuehren:
 9. `supabase/migrations/202603040009_notifications_rls.sql`
 10. `supabase/migrations/202603040010_reminder_rules_and_history.sql`
 11. `supabase/migrations/202603040011_reminder_rules_and_history_rls.sql`
+12. `supabase/migrations/202603040012_approval_steps.sql`
+13. `supabase/migrations/202603040013_auto_archive_on_final_approval.sql`
 
 ### 5. Edge Secrets setzen
 

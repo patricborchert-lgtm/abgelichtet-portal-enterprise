@@ -32,6 +32,7 @@ import { formatDate } from "@/lib/utils";
 import type {
   ActivityPayload,
   ApprovalDecisionValues,
+  ApprovalRequestValues,
   Milestone,
   MilestoneFormValues,
   MilestoneStatus,
@@ -263,12 +264,12 @@ export function ProjectDetailsPage() {
   });
 
   const requestApprovalMutation = useMutation({
-    mutationFn: (message: string) => {
+    mutationFn: (values: ApprovalRequestValues) => {
       if (!user) {
         throw new Error("Keine aktive Session.");
       }
 
-      return requestProjectApproval(projectId, user.id, message);
+      return requestProjectApproval(projectId, user.id, values);
     },
     onSuccess: async (approval) => {
       logActivitySafely({
@@ -277,6 +278,9 @@ export function ProjectDetailsPage() {
         entityType: "approval",
         metadata: {
           project_id: projectId,
+          step_key: approval.step_key,
+          step_label: approval.step_label,
+          step_round: approval.step_round,
         },
       });
       await queryClient.invalidateQueries({ queryKey: ["project-approvals", projectId] });
@@ -298,6 +302,8 @@ export function ProjectDetailsPage() {
         },
       });
       await queryClient.invalidateQueries({ queryKey: ["project-approvals", projectId] });
+      await queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+      await queryClient.invalidateQueries({ queryKey: ["projects", "admin"] });
       toast.success(variables.values.status === "approved" ? "Projekt abgenommen." : "Änderungswunsch gespeichert.");
     },
   });
@@ -479,19 +485,22 @@ export function ProjectDetailsPage() {
     }
   }
 
-  async function handleRequestApproval(message: string) {
+  async function handleRequestApproval(values: ApprovalRequestValues) {
     try {
-      await requestApprovalMutation.mutateAsync(message);
-      sendProjectEmailSafely("approval_requested", message || undefined);
+      await requestApprovalMutation.mutateAsync(values);
+      sendProjectEmailSafely(
+        "approval_requested",
+        values.message ? `${values.stepLabel}: ${values.message}` : `${values.stepLabel} wurde zur Abnahme angefragt.`,
+      );
       createProjectNotificationSafely(
         "approval_requested",
-        "Abnahme angefordert",
-        message || "Für dieses Projekt wurde eine Abnahme angefragt.",
+        `${values.stepLabel} angefragt`,
+        values.message || `${values.stepLabel} wurde zur Abnahme angefragt.`,
       );
       await appendSupportingTimelineEvent({
         authorLabel: getAuthorLabel(),
         eventType: "approval_requested",
-        message: message || "Abnahme für dieses Projekt wurde angefragt.",
+        message: values.message || `${values.stepLabel} wurde zur Abnahme angefragt.`,
       });
     } catch (error) {
       toast.error(getErrorMessage(error, "Abnahme konnte nicht angefordert werden."));
@@ -514,7 +523,9 @@ export function ProjectDetailsPage() {
       sendProjectEmailSafely(values.status, values.comment || undefined);
       createProjectNotificationSafely(
         values.status,
-        values.status === "approved" ? "Projekt abgenommen" : "Änderungen angefordert",
+        values.status === "approved"
+          ? `${pendingApproval.step_label ?? "Projekt-Step"} abgenommen`
+          : `${pendingApproval.step_label ?? "Projekt-Step"}: Änderungen angefordert`,
         values.comment || (values.status === "approved" ? "Das Projekt wurde abgenommen." : "Es wurden Änderungen angefordert."),
       );
       await appendSupportingTimelineEvent({
@@ -522,8 +533,8 @@ export function ProjectDetailsPage() {
         eventType: values.status,
         message:
           values.status === "approved"
-            ? values.comment || "Projekt wurde abgenommen."
-            : values.comment,
+            ? values.comment || `${pendingApproval.step_label ?? "Projekt-Step"} wurde abgenommen.`
+            : values.comment || `${pendingApproval.step_label ?? "Projekt-Step"} benötigt Änderungen.`,
       });
     } catch (error) {
       toast.error(getErrorMessage(error, "Deine Entscheidung konnte nicht gespeichert werden."));

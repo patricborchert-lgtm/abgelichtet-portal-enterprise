@@ -5,9 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { APPROVAL_STEP_OPTIONS } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
-import type { Approval, ApprovalDecisionValues, ProjectStatus } from "@/types/app";
+import type { Approval, ApprovalDecisionValues, ApprovalRequestValues, ApprovalStepKey, ProjectStatus } from "@/types/app";
 
 interface ProjectApprovalsTabProps {
   approvals: Approval[];
@@ -17,7 +19,7 @@ interface ProjectApprovalsTabProps {
   isRequesting: boolean;
   projectStatus: ProjectStatus;
   onDecide: (values: ApprovalDecisionValues) => Promise<void>;
-  onRequestApproval: (message: string) => Promise<void>;
+  onRequestApproval: (values: ApprovalRequestValues) => Promise<void>;
 }
 
 function getApprovalLabel(status: Approval["status"]): string {
@@ -55,14 +57,20 @@ export function ProjectApprovalsTab({
   onRequestApproval,
 }: ProjectApprovalsTabProps) {
   const [requestMessage, setRequestMessage] = useState("");
+  const [requestStep, setRequestStep] = useState<ApprovalStepKey>("design_proposal");
   const [responseComment, setResponseComment] = useState("");
 
   const pendingApproval = useMemo(() => approvals.find((approval) => approval.status === "pending") ?? null, [approvals]);
   const latestApproval = approvals[0] ?? null;
-  const canRequestApproval = isAdmin && projectStatus === "delivered" && !pendingApproval;
+  const selectedStep = APPROVAL_STEP_OPTIONS.find((option) => option.value === requestStep) ?? APPROVAL_STEP_OPTIONS[0];
+  const canRequestApproval = isAdmin && (projectStatus === "review" || projectStatus === "delivered") && !pendingApproval;
 
   async function handleRequestApproval() {
-    await onRequestApproval(requestMessage.trim());
+    await onRequestApproval({
+      message: requestMessage.trim(),
+      stepKey: selectedStep.value,
+      stepLabel: selectedStep.label,
+    });
     setRequestMessage("");
   }
 
@@ -92,6 +100,11 @@ export function ProjectApprovalsTab({
               <Badge variant={latestApproval ? getApprovalVariant(latestApproval.status) : "outline"}>
                 {latestApproval ? getApprovalLabel(latestApproval.status) : "Noch keine Abnahme"}
               </Badge>
+              {latestApproval ? (
+                <Badge variant="outline">
+                  {latestApproval.step_label ?? "Finale Projektabnahme"} · Runde {latestApproval.step_round}
+                </Badge>
+              ) : null}
               {latestApproval ? <span className="text-sm text-slate-500">{formatDate(latestApproval.created_at)}</span> : null}
             </div>
             <p className="mt-3 text-sm leading-6 text-slate-600">
@@ -106,8 +119,24 @@ export function ProjectApprovalsTab({
               <div className="space-y-1">
                 <h3 className="text-sm font-semibold text-slate-900">Abnahme anfragen</h3>
                 <p className="text-sm text-slate-500">
-                  Setze den Projektstatus zuerst auf „Bereit zur Abnahme“, damit die Anfrage sauber nachvollziehbar bleibt.
+                  Setze den Projektstatus auf „Feedback benötigt“ oder „Bereit zur Abnahme“, damit die Anfrage sauber nachvollziehbar bleibt.
                 </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="approval-step">Abnahme-Step</Label>
+                <Select onValueChange={(value) => setRequestStep(value as ApprovalStepKey)} value={requestStep}>
+                  <SelectTrigger id="approval-step">
+                    <SelectValue placeholder="Step auswählen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {APPROVAL_STEP_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-slate-500">{selectedStep.description}</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="approval-request-message">Nachricht an den Kunden</Label>
@@ -125,7 +154,7 @@ export function ProjectApprovalsTab({
                 <p className="text-xs text-slate-500">
                   {pendingApproval
                     ? "Es gibt bereits eine offene Abnahmeanfrage."
-                    : "Die Anfrage ist erst möglich, wenn der Status auf „Bereit zur Abnahme“ steht."}
+                    : "Die Anfrage ist erst möglich, wenn der Status auf „Feedback benötigt“ oder „Bereit zur Abnahme“ steht."}
                 </p>
               ) : null}
             </div>
@@ -186,6 +215,9 @@ export function ProjectApprovalsTab({
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant={getApprovalVariant(approval.status)}>{getApprovalLabel(approval.status)}</Badge>
+                      <Badge variant="outline">
+                        {approval.step_label ?? "Finale Projektabnahme"} · Runde {approval.step_round}
+                      </Badge>
                       <span className="text-sm text-slate-500">Angefragt am {formatDate(approval.created_at)}</span>
                     </div>
                     {approval.decided_at ? <span className="text-sm text-slate-500">Entschieden am {formatDate(approval.decided_at)}</span> : null}

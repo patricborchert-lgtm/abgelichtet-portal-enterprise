@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { assertSuccess } from "@/lib/errors";
 import type {
   Approval,
+  ApprovalRequestValues,
   ApprovalDecisionValues,
   Milestone,
   MilestoneFormValues,
@@ -124,14 +125,32 @@ export async function listProjectApprovals(projectId: string): Promise<Approval[
 export async function requestProjectApproval(
   projectId: string,
   requestedBy: string,
-  requestMessage: string,
+  values: ApprovalRequestValues,
 ): Promise<Approval> {
+  const previousStepResult = await supabase
+    .from("approvals")
+    .select("step_round")
+    .eq("project_id", projectId)
+    .eq("step_key", values.stepKey)
+    .order("step_round", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (previousStepResult.error) {
+    throw new Error(previousStepResult.error.message);
+  }
+
+  const nextStepRound = (previousStepResult.data?.step_round ?? 0) + 1;
+
   const result = await supabase
     .from("approvals")
     .insert({
       project_id: projectId,
-      request_message: requestMessage || null,
+      request_message: values.message || null,
       requested_by: requestedBy,
+      step_key: values.stepKey,
+      step_label: values.stepLabel,
+      step_round: nextStepRound,
       status: "pending",
     })
     .select("*")

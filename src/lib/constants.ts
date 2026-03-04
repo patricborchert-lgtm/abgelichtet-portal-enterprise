@@ -1,4 +1,4 @@
-import type { ProjectFileFolderKey, ProjectStatus, Role } from "@/types/app";
+import type { ApprovalStepKey, ProjectFileFolderKey, ProjectStatus, Role } from "@/types/app";
 
 export const APP_NAME = "abgelichtet Portal Enterprise";
 
@@ -30,6 +30,33 @@ export const PROJECT_FILE_FOLDERS: Array<{ label: string; value: ProjectFileFold
   { value: "medien-vom-kunden", label: "Medien vom Kunden" },
   { value: "entwuerfe", label: "Entwürfe" },
   { value: "final", label: "Final" },
+];
+
+export const APPROVAL_STEP_OPTIONS: Array<{
+  description: string;
+  label: string;
+  value: ApprovalStepKey;
+}> = [
+  {
+    value: "design_proposal",
+    label: "Design-Vorschlag",
+    description: "Erste Designrichtung zur Freigabe vor Umsetzung.",
+  },
+  {
+    value: "revision_round",
+    label: "Änderungsrunde",
+    description: "Zwischenabnahme nach eingearbeiteten Anpassungen.",
+  },
+  {
+    value: "pre_go_live",
+    label: "Vor Go Live",
+    description: "Letzte Freigabe vor dem Livegang.",
+  },
+  {
+    value: "final_project",
+    label: "Finale Projektabnahme",
+    description: "Abschlussfreigabe für das gesamte Projekt.",
+  },
 ];
 
 export const LEGACY_PROJECT_FILE_GROUP = {

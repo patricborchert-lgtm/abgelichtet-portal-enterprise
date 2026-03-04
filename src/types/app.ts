@@ -18,6 +18,7 @@ export type NotificationType = Notification["type"];
 export type MilestoneStatus = Database["public"]["Tables"]["milestones"]["Row"]["status"];
 export type TimelineEventType = Database["public"]["Tables"]["timeline_events"]["Row"]["event_type"];
 export type ApprovalStatus = Database["public"]["Tables"]["approvals"]["Row"]["status"];
+export type ApprovalStepKey = Database["public"]["Tables"]["approvals"]["Row"]["step_key"];
 export type ProjectTemplateKey = "website" | "seo" | "photography";
 export type ProjectFileFolderKey = "briefing-inhalte" | "medien-vom-kunden" | "entwuerfe" | "final";
 
@@ -59,6 +60,12 @@ export interface TimelineEventFormValues {
 export interface ApprovalDecisionValues {
   comment: string;
   status: Extract<ApprovalStatus, "approved" | "changes_requested">;
+}
+
+export interface ApprovalRequestValues {
+  message: string;
+  stepKey: ApprovalStepKey;
+  stepLabel: string;
 }
 
 export interface MessageFormValues {

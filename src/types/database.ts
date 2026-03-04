@@ -80,6 +80,9 @@ export interface Database {
           requested_by: string | null;
           response_comment: string | null;
           reviewed_by: string | null;
+          step_key: "design_proposal" | "revision_round" | "pre_go_live" | "final_project";
+          step_label: string | null;
+          step_round: number;
           status: "pending" | "approved" | "changes_requested";
         };
         Insert: {
@@ -91,6 +94,9 @@ export interface Database {
           requested_by?: string | null;
           response_comment?: string | null;
           reviewed_by?: string | null;
+          step_key?: "design_proposal" | "revision_round" | "pre_go_live" | "final_project";
+          step_label?: string | null;
+          step_round?: number;
           status?: "pending" | "approved" | "changes_requested";
         };
         Update: {
@@ -102,6 +108,9 @@ export interface Database {
           requested_by?: string | null;
           response_comment?: string | null;
           reviewed_by?: string | null;
+          step_key?: "design_proposal" | "revision_round" | "pre_go_live" | "final_project";
+          step_label?: string | null;
+          step_round?: number;
           status?: "pending" | "approved" | "changes_requested";
         };
       };
