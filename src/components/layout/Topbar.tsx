@@ -7,8 +7,11 @@ import { getUnreadNotificationCount, listNotifications, markNotificationRead } f
 import { QuickCreateMenu } from "@/components/layout/QuickCreateMenu";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { NotificationDropdown } from "@/components/notifications/NotificationDropdown";
+import { GlobalSearchModal } from "@/components/search/GlobalSearchModal";
+import { SearchInput } from "@/components/search/SearchInput";
 import { PremiumButton } from "@/components/ui/PremiumButton";
 import { useAuth } from "@/hooks/useAuth";
+import { useCommandPalette } from "@/hooks/useCommandPalette";
 import { getErrorMessage } from "@/lib/errors";
 import type { Notification } from "@/types/app";
 
@@ -17,6 +20,7 @@ export function Topbar() {
   const queryClient = useQueryClient();
   const { profile, signOut, user } = useAuth();
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const { open: isSearchOpen, openPalette, setOpen: setIsSearchOpen } = useCommandPalette();
   const notificationRootRef = useRef<HTMLDivElement | null>(null);
 
   const notificationsQuery = useQuery({
@@ -83,6 +87,15 @@ export function Topbar() {
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-3">
+        <SearchInput
+          aria-label="Global search"
+          containerClassName="w-full sm:w-64"
+          onClick={openPalette}
+          onFocus={openPalette}
+          placeholder="Search..."
+          readOnly
+          showShortcut
+        />
         {profile?.role === "admin" ? <QuickCreateMenu /> : null}
         <div className="relative" ref={notificationRootRef}>
           <NotificationBell
@@ -107,6 +120,12 @@ export function Topbar() {
           Ausloggen
         </PremiumButton>
       </div>
+
+      <GlobalSearchModal
+        isAdmin={profile?.role === "admin"}
+        onOpenChange={setIsSearchOpen}
+        open={isSearchOpen}
+      />
     </div>
   );
 }

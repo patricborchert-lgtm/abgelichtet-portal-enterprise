@@ -20,6 +20,14 @@ const LEGACY_TEMPLATE_TO_SERVICE: Record<ProjectTemplateKey, ProjectServiceType>
   website: "webdesign",
 };
 
+export interface SearchMilestone {
+  id: string;
+  project_id: string;
+  projects: { title: string } | null;
+  status: string;
+  title: string;
+}
+
 export async function listProjectMilestones(projectId: string): Promise<Milestone[]> {
   const result = await supabase
     .from("milestones")
@@ -72,6 +80,16 @@ export async function createProjectMilestonesForService(
 
 export async function createProjectMilestoneTemplate(projectId: string, templateKey: ProjectTemplateKey): Promise<Milestone[]> {
   return createProjectMilestonesForService(projectId, LEGACY_TEMPLATE_TO_SERVICE[templateKey]);
+}
+
+export async function listRecentMilestonesForSearch(limit = 80): Promise<SearchMilestone[]> {
+  const result = await supabase
+    .from("milestones")
+    .select("id, title, status, project_id, projects(title)")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  return assertSuccess(result, "Meilensteine konnten nicht geladen werden.") as unknown as SearchMilestone[];
 }
 
 export async function updateProjectMilestone(

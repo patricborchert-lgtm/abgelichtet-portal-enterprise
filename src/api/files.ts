@@ -4,6 +4,14 @@ import { assertSuccess } from "@/lib/errors";
 import { buildStoragePath } from "@/lib/storage";
 import type { ProjectFile, ProjectFileFolderKey } from "@/types/app";
 
+export interface SearchProjectFile {
+  created_at: string;
+  filename: string;
+  id: string;
+  project_id: string;
+  projects: { title: string } | null;
+}
+
 export async function listProjectFiles(projectId: string): Promise<ProjectFile[]> {
   const result = await supabase
     .from("project_files")
@@ -69,4 +77,14 @@ export async function getProjectFileDownloadUrl(file: ProjectFile): Promise<stri
   const result = await supabase.storage.from(STORAGE_BUCKET).createSignedUrl(file.storage_path, 60);
   const data = assertSuccess(result, "Download-Link konnte nicht erstellt werden.");
   return data.signedUrl;
+}
+
+export async function listRecentProjectFilesForSearch(limit = 60): Promise<SearchProjectFile[]> {
+  const result = await supabase
+    .from("project_files")
+    .select("id, filename, created_at, project_id, projects(title)")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  return assertSuccess(result, "Dateien konnten nicht geladen werden.") as unknown as SearchProjectFile[];
 }
