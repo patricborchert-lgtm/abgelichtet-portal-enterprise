@@ -15,7 +15,7 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
   const baseStyles = "inline-flex items-center justify-center font-medium transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none rounded-lg";
   
   const variants = {
-    primary: "bg-violet-600 text-white hover:bg-violet-700 shadow-sm hover:shadow-md shadow-violet-500/20",
+    primary: "bg-gradient-to-b from-violet-500 to-violet-600 text-white shadow-[0_8px_20px_rgba(109,40,217,0.26)] hover:from-violet-600 hover:to-violet-700 hover:shadow-[0_10px_24px_rgba(109,40,217,0.30)]",
     secondary: "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:text-slate-900 shadow-sm",
     ghost: "text-slate-600 hover:bg-slate-100 hover:text-slate-900 bg-transparent"
   };

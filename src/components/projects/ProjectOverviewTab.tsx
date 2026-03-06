@@ -71,7 +71,7 @@ export function ProjectOverviewTab({
             submitLabel="Projekt speichern"
           />
         ) : (
-          <Card className="border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]" style={{ borderRadius: 16 }}>
+          <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-2xl text-slate-950">Projektinformationen</CardTitle>
             </CardHeader>
@@ -89,7 +89,7 @@ export function ProjectOverviewTab({
           </Card>
         )}
 
-        <Card className="border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]" style={{ borderRadius: 16 }}>
+        <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-2xl text-slate-950">Projekt Snapshot</CardTitle>
             <CardDescription>Wichtige Eckdaten für eine schnelle Einordnung.</CardDescription>
@@ -110,7 +110,7 @@ export function ProjectOverviewTab({
 
       {isAdmin ? <FileUploadCard onUpload={onUploadFile} /> : null}
 
-      <Card className="border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]" style={{ borderRadius: 16 }}>
+      <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-2xl text-slate-950">Dateien</CardTitle>
         </CardHeader>

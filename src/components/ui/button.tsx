@@ -14,8 +14,10 @@ const buttonVariants = cva(
         sm: "h-9 px-3",
       },
       variant: {
-        default: "bg-violet-600 text-white shadow-sm shadow-violet-500/20 hover:bg-violet-700 hover:shadow-md",
-        destructive: "bg-rose-600 text-white shadow-sm shadow-rose-500/20 hover:bg-rose-700 hover:shadow-md",
+        default:
+          "bg-gradient-to-b from-violet-500 to-violet-600 text-white shadow-[0_8px_20px_rgba(109,40,217,0.26)] hover:from-violet-600 hover:to-violet-700 hover:shadow-[0_10px_24px_rgba(109,40,217,0.30)]",
+        destructive:
+          "bg-gradient-to-b from-rose-500 to-rose-600 text-white shadow-[0_8px_20px_rgba(225,29,72,0.24)] hover:from-rose-600 hover:to-rose-700 hover:shadow-[0_10px_24px_rgba(225,29,72,0.28)]",
         ghost: "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900",
         outline: "border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 hover:text-slate-900",
         secondary: "bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900",

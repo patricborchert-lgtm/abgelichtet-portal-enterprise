@@ -84,8 +84,8 @@ export function ProjectApprovalsTab({
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-      <Card className="border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+    <div className="grid gap-7 lg:grid-cols-[0.95fr_1.05fr]">
+      <Card>
         <CardHeader className="pb-4">
           <CardTitle className="text-2xl text-slate-950">Abnahme</CardTitle>
           <CardDescription>Steuere Freigaben und Kundenfeedback direkt im Projekt.</CardDescription>
@@ -197,7 +197,7 @@ export function ProjectApprovalsTab({
         </CardContent>
       </Card>
 
-      <Card className="border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+      <Card>
         <CardHeader className="pb-4">
           <CardTitle className="text-2xl text-slate-950">Verlauf</CardTitle>
           <CardDescription>Alle bisherigen Abnahmeanfragen und Entscheidungen in chronologischer Reihenfolge.</CardDescription>

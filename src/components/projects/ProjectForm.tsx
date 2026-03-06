@@ -69,8 +69,8 @@ export function ProjectForm({
         <CardTitle className="text-2xl text-slate-950">Projekt</CardTitle>
       </CardHeader>
       <CardContent>
-        <form className="grid gap-6 md:grid-cols-2" onSubmit={handleSubmit}>
-          <div className="space-y-2 md:col-span-2">
+        <form className="grid gap-6 lg:grid-cols-2" onSubmit={handleSubmit}>
+          <div className="space-y-2">
             <Label className="text-slate-700" htmlFor="title">
               Titel
             </Label>
@@ -112,7 +112,7 @@ export function ProjectForm({
             </Select>
           </div>
           {showTemplateSelector ? (
-            <div className="space-y-2 md:col-span-2">
+            <div className="space-y-2">
               <Label className="text-slate-700">Meilenstein-Vorlage</Label>
               <Select onValueChange={(value) => updateValue("templateKey", value as ProjectFormValues["templateKey"])} value={values.templateKey ?? ""}>
                 <SelectTrigger>
@@ -133,7 +133,7 @@ export function ProjectForm({
               </p>
             </div>
           ) : null}
-          <div className="space-y-2 md:col-span-2">
+          <div className="space-y-2 lg:col-span-2">
             <Label className="text-slate-700" htmlFor="description">
               Beschreibung
             </Label>
@@ -143,7 +143,7 @@ export function ProjectForm({
               value={values.description}
             />
           </div>
-          <div className="md:col-span-2 pt-2">
+          <div className="pt-2 lg:col-span-2">
             <PremiumButton className="min-w-[220px]" disabled={isSubmitting} type="submit">
               {submitLabel}
             </PremiumButton>

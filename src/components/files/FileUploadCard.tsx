@@ -1,6 +1,6 @@
 import { useState, type ChangeEvent, type DragEvent } from "react";
 import { toast } from "sonner";
-import { Upload } from "lucide-react";
+import { Upload, UploadCloud } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PROJECT_FILE_FOLDERS, UPLOAD_FILE_HINT } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
@@ -107,23 +107,26 @@ export function FileUploadCard({ disabled = false, onUpload }: FileUploadCardPro
       <CardContent className="space-y-4">
         <div
           className={cn(
-            "rounded-2xl border border-dashed p-5 transition-colors",
+            "flex h-40 flex-col items-center justify-center rounded-xl border border-dashed px-5 text-center transition-colors",
             isDragActive
-              ? "border-[#8F87F1] bg-[linear-gradient(180deg,rgba(143,135,241,0.12)_0%,rgba(255,255,255,1)_55%)]"
-              : "border-[#8F87F1]/30 bg-[linear-gradient(180deg,rgba(143,135,241,0.06)_0%,rgba(255,255,255,1)_55%)]",
+              ? "border-violet-400/80 bg-violet-50/60"
+              : "border-violet-300/70 bg-violet-50/35",
           )}
           onDragLeave={handleDragLeave}
           onDragOver={handleDragOver}
           onDrop={(event) => void handleDrop(event)}
         >
-          <p className="text-sm font-medium text-slate-800">Datei hinzufügen</p>
-          <p className="mt-1 text-sm leading-6 text-slate-500">
-            Wähle einen Ordner aus oder ziehe deine Datei direkt in diesen Bereich.
+          <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-full border border-violet-200 bg-white text-violet-600">
+            <UploadCloud className="h-5 w-5" />
+          </div>
+          <p className="text-sm font-semibold text-slate-800">Dateien hier ablegen oder durchsuchen</p>
+          <p className="mt-1 max-w-md text-sm leading-6 text-slate-500">
+            Wähle zuerst den Ordner und ziehe dann Dateien in den Bereich oder nutze die Auswahl.
           </p>
-          <p className="mt-3 text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
+          <p className="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
             {UPLOAD_FILE_HINT}
           </p>
-          {isDragActive ? <p className="mt-3 text-sm font-medium text-[#6E65D8]">Datei hier ablegen, um den Upload zu starten.</p> : null}
+          {isDragActive ? <p className="mt-2 text-sm font-medium text-violet-700">Datei hier ablegen, um den Upload zu starten.</p> : null}
         </div>
         <div className="space-y-2">
           <Label>Dateiordner</Label>
@@ -141,10 +144,7 @@ export function FileUploadCard({ disabled = false, onUpload }: FileUploadCardPro
           </Select>
         </div>
         <div className="flex flex-col gap-3 md:flex-row md:items-center">
-          <Button
-            asChild
-            disabled={disabled || isUploading}
-          >
+          <Button asChild disabled={disabled || isUploading}>
             <label className="cursor-pointer">
               <Upload className="h-4 w-4" />
               {isUploading ? "Upload läuft..." : "Dateien auswählen"}

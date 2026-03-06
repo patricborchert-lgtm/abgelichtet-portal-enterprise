@@ -6,10 +6,11 @@
   body {
     /* Soft neutral base with subtle violet radial gradients */
     background: 
-      radial-gradient(circle at 20% 10%, rgba(139, 92, 246, 0.08), transparent 40%),
-      radial-gradient(circle at 80% 90%, rgba(99, 102, 241, 0.08), transparent 40%),
-      #f8fafc; /* Slate 50 */
+      radial-gradient(circle at 20% 10%, rgba(139, 92, 246, 0.07), transparent 42%),
+      radial-gradient(circle at 80% 90%, rgba(99, 102, 241, 0.07), transparent 42%),
+      #f3f5fb;
     color: #0f172a; /* Slate 900 */
+    min-height: 100vh;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -29,19 +30,25 @@
 @layer components {
   /* Premium Card Style */
   .premium-card {
-    @apply bg-white rounded-[16px] border border-slate-200/60 p-6;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+    @apply bg-white rounded-[14px] border p-6;
+    border-color: rgba(15, 23, 42, 0.06);
+    box-shadow: 0 4px 24px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.03);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
 
   .premium-card:hover {
     @apply -translate-y-0.5;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06), 0 2px 4px rgba(15, 23, 42, 0.04);
   }
 
   /* Premium Inputs */
   .premium-input {
-    @apply bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all duration-200;
+    @apply bg-white border border-slate-200/90 rounded-xl px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-violet-400 transition-all duration-200;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+  }
+
+  .premium-input:focus {
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
   }
 
   /* Modern Progress Bar */

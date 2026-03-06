@@ -139,7 +139,7 @@ export function ClientDetailsPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <PageHeader
         actions={
           <>
@@ -158,7 +158,7 @@ export function ClientDetailsPage() {
         title={client.name}
       />
 
-      <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+      <div className="grid gap-7 lg:grid-cols-[1.2fr_0.8fr]">
         <ClientForm
           defaultValues={{
             company: client.company ?? "",
@@ -172,10 +172,7 @@ export function ClientDetailsPage() {
           submitLabel="Änderungen speichern"
         />
 
-        <Card
-          className="border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
-          style={{ borderRadius: 16 }}
-        >
+        <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-2xl text-slate-950">Kundenstatus</CardTitle>
           </CardHeader>
@@ -213,10 +210,7 @@ export function ClientDetailsPage() {
         </Card>
       </div>
 
-      <Card
-        className="border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
-        style={{ borderRadius: 16 }}
-      >
+      <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-2xl text-slate-950">Projekte</CardTitle>
         </CardHeader>

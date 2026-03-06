@@ -29,8 +29,8 @@ export function ProjectChatTab({ isSubmitting, messages, onSubmit }: ProjectChat
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-      <Card className="border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+    <div className="grid gap-7 lg:grid-cols-[0.9fr_1.1fr]">
+      <Card>
         <CardHeader className="pb-4">
           <CardTitle className="text-2xl text-slate-950">Neue Nachricht</CardTitle>
           <CardDescription>Stelle Rückfragen oder gib dem Kunden ein kurzes Update direkt im Projekt-Chat.</CardDescription>
@@ -52,7 +52,7 @@ export function ProjectChatTab({ isSubmitting, messages, onSubmit }: ProjectChat
         </CardContent>
       </Card>
 
-      <Card className="border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+      <Card>
         <CardHeader className="pb-4">
           <CardTitle className="text-2xl text-slate-950">Chat</CardTitle>
           <CardDescription>Alle projektbezogenen Nachrichten zwischen Admin und Kunde an einem Ort.</CardDescription>

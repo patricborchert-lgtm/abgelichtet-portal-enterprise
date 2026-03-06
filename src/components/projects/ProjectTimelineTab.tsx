@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import type { TimelineEvent } from "@/types/app";
 
 interface ProjectTimelineTabProps {
@@ -48,6 +48,24 @@ function getEventLabel(eventType: TimelineEvent["event_type"]): string {
   }
 }
 
+function getEventDotClass(eventType: TimelineEvent["event_type"]): string {
+  switch (eventType) {
+    case "approved":
+      return "bg-emerald-500";
+    case "approval_requested":
+      return "bg-violet-500";
+    case "changes_requested":
+      return "bg-rose-500";
+    case "milestone":
+      return "bg-amber-500";
+    case "update":
+      return "bg-slate-500";
+    case "comment":
+    default:
+      return "bg-slate-400";
+  }
+}
+
 export function ProjectTimelineTab({ events, isSubmitting, onSubmit }: ProjectTimelineTabProps) {
   const [message, setMessage] = useState("");
 
@@ -63,8 +81,8 @@ export function ProjectTimelineTab({ events, isSubmitting, onSubmit }: ProjectTi
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-      <Card className="border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+    <div className="grid gap-7 lg:grid-cols-[0.85fr_1.15fr]">
+      <Card>
         <CardHeader className="pb-4">
           <CardTitle className="text-2xl text-slate-950">Neues Update</CardTitle>
           <CardDescription>Teile wichtige Projektstände, Feedback oder kurze Rückfragen direkt in der Timeline.</CardDescription>
@@ -86,7 +104,7 @@ export function ProjectTimelineTab({ events, isSubmitting, onSubmit }: ProjectTi
         </CardContent>
       </Card>
 
-      <Card className="border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+      <Card>
         <CardHeader className="pb-4">
           <CardTitle className="text-2xl text-slate-950">Timeline</CardTitle>
           <CardDescription>Alle wichtigen Schritte und Rückmeldungen rund um dieses Projekt.</CardDescription>
@@ -95,23 +113,28 @@ export function ProjectTimelineTab({ events, isSubmitting, onSubmit }: ProjectTi
           {events.length === 0 ? (
             <EmptyState description="Für dieses Projekt gibt es noch keine Timeline-Einträge." title="Noch keine Einträge" />
           ) : (
-            <div className="space-y-4">
+            <div className="relative space-y-5 before:absolute before:left-[7px] before:top-2 before:h-[calc(100%-1rem)] before:w-px before:bg-slate-200">
               {events.map((event) => (
-                <div
-                  key={event.id}
-                  className="rounded-2xl border border-slate-200/80 bg-[linear-gradient(180deg,rgba(143,135,241,0.04)_0%,rgba(255,255,255,1)_38%)] p-4 shadow-[0_12px_28px_rgba(15,23,42,0.05)]"
-                >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant={getEventVariant(event.event_type)}>{getEventLabel(event.event_type)}</Badge>
-                        <span className="text-sm font-medium text-slate-900">{event.author_label}</span>
+                <div key={event.id} className="relative pl-7">
+                  <span
+                    className={cn(
+                      "absolute left-0 top-2 z-10 h-4 w-4 rounded-full border-2 border-white shadow-sm",
+                      getEventDotClass(event.event_type),
+                    )}
+                  />
+                  <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-[0_8px_18px_rgba(15,23,42,0.04)]">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant={getEventVariant(event.event_type)}>{getEventLabel(event.event_type)}</Badge>
+                          <span className="text-sm font-medium text-slate-900">{event.author_label}</span>
+                        </div>
+                        <p className="text-sm leading-6 text-slate-600">{event.message}</p>
                       </div>
-                      <p className="text-sm leading-6 text-slate-600">{event.message}</p>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-slate-400">
-                      <Sparkles className="h-4 w-4" />
-                      <span>{formatDate(event.created_at)}</span>
+                      <div className="flex items-center gap-2 text-xs text-slate-400">
+                        <Sparkles className="h-4 w-4" />
+                        <span>{formatDate(event.created_at)}</span>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -15,7 +15,7 @@ interface ProjectTabsProps {
 export function ProjectTabs({ activeTab, items, onChange }: ProjectTabsProps) {
   return (
     <div className="overflow-x-auto">
-      <div className="inline-flex min-w-full rounded-xl border border-slate-200/70 bg-white/90 p-1.5 shadow-sm">
+      <div className="flex min-w-max items-center gap-6 border-b border-slate-200 px-1">
         {items.map((item) => {
           const isActive = item.key === activeTab;
 
@@ -23,10 +23,8 @@ export function ProjectTabs({ activeTab, items, onChange }: ProjectTabsProps) {
             <button
               key={item.key}
               className={cn(
-                "flex min-w-[140px] items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-medium transition-all duration-200",
-                isActive
-                  ? "bg-violet-50 text-violet-700 shadow-sm ring-1 ring-violet-200/60"
-                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
+                "relative -mb-px inline-flex items-center gap-2 border-b-2 px-1 py-3 text-sm font-medium transition-colors duration-200",
+                isActive ? "border-violet-500 text-slate-900" : "border-transparent text-slate-500 hover:text-slate-900",
               )}
               onClick={() => onChange(item.key)}
               type="button"

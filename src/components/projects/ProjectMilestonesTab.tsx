@@ -55,6 +55,18 @@ function getMilestoneIcon(status: MilestoneStatus) {
   }
 }
 
+function getMilestoneDotClass(status: MilestoneStatus): string {
+  switch (status) {
+    case "completed":
+      return "bg-emerald-500";
+    case "in_progress":
+      return "bg-violet-500";
+    case "pending":
+    default:
+      return "bg-slate-400";
+  }
+}
+
 export function ProjectMilestonesTab({
   isAdmin,
   isCreating,
@@ -84,9 +96,9 @@ export function ProjectMilestonesTab({
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+    <div className="grid gap-7 lg:grid-cols-[0.9fr_1.1fr]">
       {isAdmin ? (
-        <Card className="border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+        <Card>
           <CardHeader className="pb-4">
             <CardTitle className="text-2xl text-slate-950">Meilenstein anlegen</CardTitle>
             <CardDescription>Lege die nächsten Etappen für dieses Projekt fest und halte sie für den Kunden transparent.</CardDescription>
@@ -113,7 +125,7 @@ export function ProjectMilestonesTab({
         </Card>
       ) : null}
 
-      <Card className="border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+      <Card>
         <CardHeader className="pb-4">
           <CardTitle className="text-2xl text-slate-950">Meilensteine</CardTitle>
           <CardDescription>Der aktuelle Fortschritt dieses Projekts auf einen Blick.</CardDescription>
@@ -122,41 +134,41 @@ export function ProjectMilestonesTab({
           {milestones.length === 0 ? (
             <EmptyState description="Für dieses Projekt wurden noch keine Meilensteine definiert." title="Keine Meilensteine" />
           ) : (
-            <div className="space-y-4">
+            <div className="relative space-y-5 before:absolute before:left-[9px] before:top-2 before:h-[calc(100%-1rem)] before:w-px before:bg-slate-200">
               {milestones.map((milestone, index) => (
-                <div
-                  key={milestone.id}
-                  className="rounded-2xl border border-slate-200/80 bg-[linear-gradient(180deg,rgba(143,135,241,0.04)_0%,rgba(255,255,255,1)_38%)] p-4 shadow-[0_12px_28px_rgba(15,23,42,0.05)]"
-                >
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {getMilestoneIcon(milestone.status)}
-                        <span className="text-sm font-medium text-slate-400">Schritt {index + 1}</span>
-                        <Badge variant={getMilestoneBadgeVariant(milestone.status)}>{getMilestoneLabel(milestone.status)}</Badge>
+                <div key={milestone.id} className="relative pl-8">
+                  <span className={`absolute left-[2px] top-2 h-4 w-4 rounded-full border-2 border-white shadow-sm ${getMilestoneDotClass(milestone.status)}`} />
+                  <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-[0_8px_18px_rgba(15,23,42,0.04)]">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {getMilestoneIcon(milestone.status)}
+                          <span className="text-sm font-medium text-slate-400">Schritt {index + 1}</span>
+                          <Badge variant={getMilestoneBadgeVariant(milestone.status)}>{getMilestoneLabel(milestone.status)}</Badge>
+                        </div>
+                        <h3 className="text-lg font-semibold text-slate-950">{milestone.title}</h3>
+                        <p className="text-sm leading-6 text-slate-600">{milestone.description || "Keine zusätzliche Beschreibung hinterlegt."}</p>
                       </div>
-                      <h3 className="text-lg font-semibold text-slate-950">{milestone.title}</h3>
-                      <p className="text-sm leading-6 text-slate-600">{milestone.description || "Keine zusätzliche Beschreibung hinterlegt."}</p>
+                      {isAdmin ? (
+                        <div className="w-full lg:w-56">
+                          <Label className="mb-2 block">Status</Label>
+                          <Select
+                            disabled={isUpdating}
+                            onValueChange={(value) => void onStatusChange(milestone, value as MilestoneStatus)}
+                            value={milestone.status}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Status wählen" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">Geplant</SelectItem>
+                              <SelectItem value="in_progress">In Arbeit</SelectItem>
+                              <SelectItem value="completed">Abgeschlossen</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      ) : null}
                     </div>
-                    {isAdmin ? (
-                      <div className="w-full lg:w-56">
-                        <Label className="mb-2 block">Status</Label>
-                        <Select
-                          disabled={isUpdating}
-                          onValueChange={(value) => void onStatusChange(milestone, value as MilestoneStatus)}
-                          value={milestone.status}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Status wählen" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="pending">Geplant</SelectItem>
-                            <SelectItem value="in_progress">In Arbeit</SelectItem>
-                            <SelectItem value="completed">Abgeschlossen</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    ) : null}
                   </div>
                 </div>
               ))}
