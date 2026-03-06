@@ -148,7 +148,7 @@ export function FileUploadCard({ disabled = false, onUpload }: FileUploadCardPro
             <label className="cursor-pointer">
               <Upload className="h-4 w-4" />
               {isUploading ? "Upload läuft..." : "Dateien auswählen"}
-              <input className="hidden" multiple onChange={(event) => void handleChange(event)} type="file" />
+              <input id="project-file-upload-input" className="hidden" multiple onChange={(event) => void handleChange(event)} type="file" />
             </label>
           </Button>
         </div>

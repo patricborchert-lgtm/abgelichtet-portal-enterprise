@@ -98,7 +98,7 @@ export function ProjectMilestonesTab({
   return (
     <div className="grid gap-7 lg:grid-cols-[0.9fr_1.1fr]">
       {isAdmin ? (
-        <Card>
+        <Card id="project-milestone-create" className="scroll-mt-24">
           <CardHeader className="pb-4">
             <CardTitle className="text-2xl text-slate-950">Meilenstein anlegen</CardTitle>
             <CardDescription>Lege die nächsten Etappen für dieses Projekt fest und halte sie für den Kunden transparent.</CardDescription>
@@ -125,7 +125,7 @@ export function ProjectMilestonesTab({
         </Card>
       ) : null}
 
-      <Card>
+      <Card id="project-milestones-list" className="scroll-mt-24">
         <CardHeader className="pb-4">
           <CardTitle className="text-2xl text-slate-950">Meilensteine</CardTitle>
           <CardDescription>Der aktuelle Fortschritt dieses Projekts auf einen Blick.</CardDescription>

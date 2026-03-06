@@ -30,7 +30,7 @@ export function ProjectChatTab({ isSubmitting, messages, onSubmit }: ProjectChat
 
   return (
     <div className="grid gap-7 lg:grid-cols-[0.9fr_1.1fr]">
-      <Card>
+      <Card id="project-comment-form" className="scroll-mt-24">
         <CardHeader className="pb-4">
           <CardTitle className="text-2xl text-slate-950">Neue Nachricht</CardTitle>
           <CardDescription>Stelle Rückfragen oder gib dem Kunden ein kurzes Update direkt im Projekt-Chat.</CardDescription>

@@ -24,6 +24,7 @@ import { ProjectApprovalsTab } from "@/components/projects/ProjectApprovalsTab";
 import { ProjectChatTab } from "@/components/projects/ProjectChatTab";
 import { ProjectMilestonesTab } from "@/components/projects/ProjectMilestonesTab";
 import { ProjectOverviewTab } from "@/components/projects/ProjectOverviewTab";
+import { ProjectQuickActions } from "@/components/projects/ProjectQuickActions";
 import { ProjectTabs } from "@/components/projects/ProjectTabs";
 import { ProjectTimelineTab } from "@/components/projects/ProjectTimelineTab";
 import { useAuth } from "@/hooks/useAuth";
@@ -359,6 +360,56 @@ export function ProjectDetailsPage() {
   const clientOptions = clientOptionsQuery.data ?? [];
   const progress = getProgressFromStatus(project.status);
 
+  function scrollToQuickActionTarget(targetIds: string[], fallbackMessage?: string): void {
+    window.setTimeout(() => {
+      for (const targetId of targetIds) {
+        const element = document.getElementById(targetId);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
+          return;
+        }
+      }
+
+      if (fallbackMessage) {
+        toast.info(fallbackMessage);
+      }
+    }, 160);
+  }
+
+  function handleQuickUploadAction(): void {
+    const currentInput = document.getElementById("project-file-upload-input") as HTMLInputElement | null;
+
+    if (activeTab === "overview" && currentInput) {
+      currentInput.click();
+      return;
+    }
+
+    setActiveTab("overview");
+    scrollToQuickActionTarget(["file-upload"], "Upload-Bereich geöffnet.");
+
+    window.setTimeout(() => {
+      const nextInput = document.getElementById("project-file-upload-input") as HTMLInputElement | null;
+      if (nextInput) {
+        nextInput.click();
+      }
+    }, 220);
+  }
+
+  function handleQuickCommentAction(): void {
+    setActiveTab("chat");
+    scrollToQuickActionTarget(["project-comment-form"], "Kommentarbereich geöffnet.");
+  }
+
+  function handleQuickMilestoneAction(): void {
+    setActiveTab("milestones");
+    scrollToQuickActionTarget(["project-milestone-create", "project-milestones-list"], "Meilenstein-Bereich geöffnet.");
+  }
+
+  function handleQuickApprovalAction(): void {
+    setActiveTab("approvals");
+    scrollToQuickActionTarget(["project-approval-request", "project-approval-decision"], "Freigabe-Bereich geöffnet.");
+  }
+
   async function handleSave(values: ProjectFormValues) {
     try {
       await updateMutation.mutateAsync(values);
@@ -582,7 +633,15 @@ export function ProjectDetailsPage() {
                     {project.clients?.name ?? "Kein Kunde zugewiesen"} · Erstellt am {formatDate(project.created_at)}
                   </p>
                 </div>
-                <StatusBadge status={project.status} />
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatusBadge status={project.status} />
+                  <ProjectQuickActions
+                    onAddComment={handleQuickCommentAction}
+                    onCreateMilestone={handleQuickMilestoneAction}
+                    onSendApproval={handleQuickApprovalAction}
+                    onUploadFile={handleQuickUploadAction}
+                  />
+                </div>
               </div>
             </div>
 

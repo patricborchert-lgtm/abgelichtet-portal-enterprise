@@ -115,7 +115,7 @@ export function ProjectApprovalsTab({
           </div>
 
           {isAdmin ? (
-            <div className="space-y-3 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4">
+            <div id="project-approval-request" className="scroll-mt-24 space-y-3 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4">
               <div className="space-y-1">
                 <h3 className="text-sm font-semibold text-slate-900">Abnahme anfragen</h3>
                 <p className="text-sm text-slate-500">
@@ -161,7 +161,7 @@ export function ProjectApprovalsTab({
           ) : null}
 
           {isClient && pendingApproval ? (
-            <div className="space-y-3 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4">
+            <div id="project-approval-decision" className="scroll-mt-24 space-y-3 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4">
               <div className="space-y-1">
                 <h3 className="text-sm font-semibold text-slate-900">Deine Rückmeldung</h3>
                 <p className="text-sm text-slate-500">
