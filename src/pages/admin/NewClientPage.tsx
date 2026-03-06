@@ -45,14 +45,7 @@ export function NewClientPage() {
       <ClientForm isSubmitting={mutation.isPending} onSubmit={handleSubmit} submitLabel="Kunden erstellen" />
 
       {inviteResult ? (
-        <Card
-          className="overflow-hidden border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
-          style={{ borderRadius: 16 }}
-        >
-          <div
-            className="h-1.5 w-full"
-            style={{ background: "linear-gradient(90deg, #8F87F1 0%, rgba(143,135,241,0.18) 100%)" }}
-          />
+        <Card className="overflow-hidden">
           <CardHeader className="pb-3">
             <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-400">Einladung</p>
             <CardTitle className="text-2xl text-slate-950">Invite-Link</CardTitle>
@@ -68,7 +61,7 @@ export function NewClientPage() {
               <Button onClick={() => void copyInviteLink()} variant="outline">
                 Link kopieren
               </Button>
-              <Button asChild className="bg-[#8F87F1] text-white hover:bg-[#7c74e2]">
+              <Button asChild>
                 <Link to={`/admin/clients/${inviteResult.clientId}`}>Zu Kundendetails</Link>
               </Button>
             </div>

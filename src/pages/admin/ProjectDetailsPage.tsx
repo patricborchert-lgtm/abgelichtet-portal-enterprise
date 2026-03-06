@@ -550,11 +550,8 @@ export function ProjectDetailsPage() {
   ] satisfies { badge?: number; key: ProjectDetailTab; label: string }[];
 
   return (
-    <div className="space-y-8">
-      <div
-        className="overflow-hidden rounded-2xl border border-white/70 bg-white shadow-[0_22px_55px_rgba(15,23,42,0.08)]"
-        style={{ borderRadius: 16 }}
-      >
+    <div className="space-y-10">
+      <div className="premium-card overflow-hidden !p-0">
         <div
           className="h-1.5 w-full"
           style={{ background: "linear-gradient(90deg, #8F87F1 0%, rgba(143,135,241,0.18) 100%)" }}
@@ -579,9 +576,9 @@ export function ProjectDetailsPage() {
                 <span className="font-medium text-slate-500">Fortschritt</span>
                 <span className="font-medium text-slate-700">{progress}%</span>
               </div>
-              <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+              <div className="premium-progress-bg h-3">
                 <div
-                  className="h-full rounded-full"
+                  className="premium-progress-bar"
                   style={{
                     background: "linear-gradient(90deg, #8F87F1 0%, #B7B1FF 100%)",
                     width: `${progress}%`,

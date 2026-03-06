@@ -8,6 +8,7 @@ import { ErrorState } from "@/components/common/ErrorState";
 import { LoadingTable } from "@/components/common/LoadingTable";
 import { PageHeader } from "@/components/common/PageHeader";
 import { StatusBadge } from "@/components/common/StatusBadge";
+import { PremiumCard } from "@/components/ui/PremiumCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDate } from "@/lib/utils";
 
@@ -58,83 +59,39 @@ export function AdminDashboardPage() {
   const recentProjects = projects.slice(0, 6);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <PageHeader
         description="Behalte aktive Kunden, laufende Projekte und letzte Aktivitäten zentral im Blick."
         title="Admin-Dashboard"
       />
 
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-        <Card
-          className="overflow-hidden border-white/70 bg-white shadow-[0_18px_45px_rgba(143,135,241,0.12)]"
-          style={{ borderRadius: 16 }}
-        >
-          <div
-            className="h-1.5 w-full"
-            style={{ background: "linear-gradient(90deg, #8F87F1 0%, rgba(143,135,241,0.18) 100%)" }}
-          />
-          <CardHeader className="pb-3">
-            <p className="text-sm font-medium text-slate-500">Kunden</p>
-            <CardTitle className="text-base text-slate-800">Aktive Kunden</CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-end justify-between">
+        <PremiumCard className="overflow-hidden" subtitle="Kunden" title="Aktive Kunden">
+          <div className="flex items-end justify-between">
             <span className="text-4xl font-semibold tracking-tight text-slate-950">{activeClients}</span>
-            <span className="rounded-full bg-[#8F87F1]/10 px-3 py-1 text-xs font-medium text-[#6E65D8]">
+            <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-medium text-violet-700">
               Live
             </span>
-          </CardContent>
-        </Card>
-        <Card
-          className="overflow-hidden border-white/70 bg-white shadow-[0_18px_45px_rgba(143,135,241,0.12)]"
-          style={{ borderRadius: 16 }}
-        >
-          <div
-            className="h-1.5 w-full"
-            style={{ background: "linear-gradient(90deg, #8F87F1 0%, rgba(143,135,241,0.18) 100%)" }}
-          />
-          <CardHeader className="pb-3">
-            <p className="text-sm font-medium text-slate-500">Projekte</p>
-            <CardTitle className="text-base text-slate-800">Projekte in Arbeit</CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-end justify-between">
+          </div>
+        </PremiumCard>
+        <PremiumCard className="overflow-hidden" subtitle="Projekte" title="Projekte in Arbeit">
+          <div className="flex items-end justify-between">
             <span className="text-4xl font-semibold tracking-tight text-slate-950">{activeProjects}</span>
             <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700">
               Aktiv
             </span>
-          </CardContent>
-        </Card>
-        <Card
-          className="overflow-hidden border-white/70 bg-white shadow-[0_18px_45px_rgba(143,135,241,0.12)]"
-          style={{ borderRadius: 16 }}
-        >
-          <div
-            className="h-1.5 w-full"
-            style={{ background: "linear-gradient(90deg, #8F87F1 0%, rgba(143,135,241,0.18) 100%)" }}
-          />
-          <CardHeader className="pb-3">
-            <p className="text-sm font-medium text-slate-500">Abnahme</p>
-            <CardTitle className="text-base text-slate-800">Offene Freigaben</CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-end justify-between">
+          </div>
+        </PremiumCard>
+        <PremiumCard className="overflow-hidden" subtitle="Abnahme" title="Offene Freigaben">
+          <div className="flex items-end justify-between">
             <span className="text-4xl font-semibold tracking-tight text-slate-950">{pendingApprovals}</span>
             <span className="rounded-full bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-700">
               Offen
             </span>
-          </CardContent>
-        </Card>
-        <Card
-          className="overflow-hidden border-white/70 bg-white shadow-[0_18px_45px_rgba(143,135,241,0.12)]"
-          style={{ borderRadius: 16 }}
-        >
-          <div
-            className="h-1.5 w-full"
-            style={{ background: "linear-gradient(90deg, #8F87F1 0%, rgba(143,135,241,0.18) 100%)" }}
-          />
-          <CardHeader className="pb-3">
-            <p className="text-sm font-medium text-slate-500">Kommunikation</p>
-            <CardTitle className="text-base text-slate-800">Nachrichten & Timeline</CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-end justify-between">
+          </div>
+        </PremiumCard>
+        <PremiumCard className="overflow-hidden" subtitle="Kommunikation" title="Nachrichten & Timeline">
+          <div className="flex items-end justify-between">
             <div>
               <span className="text-4xl font-semibold tracking-tight text-slate-950">{recentMessages}</span>
               <p className="mt-2 text-xs text-slate-500">{timelineEntries} Timeline-Einträge</p>
@@ -142,15 +99,12 @@ export function AdminDashboardPage() {
             <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-medium text-slate-600">
               Verlauf
             </span>
-          </CardContent>
-        </Card>
+          </div>
+        </PremiumCard>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.3fr_0.9fr]">
-        <Card
-          className="border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
-          style={{ borderRadius: 16 }}
-        >
+      <div className="grid gap-7 xl:grid-cols-[1.3fr_0.9fr]">
+        <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between gap-4">
               <div>
@@ -196,9 +150,9 @@ export function AdminDashboardPage() {
                         <span className="text-slate-500">Fortschritt</span>
                         <span className="font-medium text-slate-700">{progress}%</span>
                       </div>
-                      <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
+                      <div className="premium-progress-bg h-2.5">
                         <div
-                          className="h-full rounded-full"
+                          className="premium-progress-bar"
                           style={{
                             background: "linear-gradient(90deg, #8F87F1 0%, #B7B1FF 100%)",
                             width: `${progress}%`,
@@ -239,10 +193,7 @@ export function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card
-          className="border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
-          style={{ borderRadius: 16 }}
-        >
+        <Card>
           <CardHeader className="pb-3">
             <p className="text-sm font-medium text-slate-500">Aktivität</p>
             <CardTitle className="text-2xl text-slate-950">Letzte Aktivitäten</CardTitle>

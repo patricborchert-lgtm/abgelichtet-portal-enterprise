@@ -42,7 +42,7 @@ export function ProjectsPage() {
     <div className="space-y-8">
       <PageHeader
         actions={
-          <Button asChild className="bg-[#8F87F1] text-white hover:bg-[#7c74e2]">
+          <Button asChild>
             <Link to="/admin/projects/new">Projekt anlegen</Link>
           </Button>
         }
@@ -51,20 +51,14 @@ export function ProjectsPage() {
       />
 
       <Card
-        className="overflow-hidden border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
-        style={{ borderRadius: 16 }}
+        className="overflow-hidden"
       >
-        <div
-          className="h-1.5 w-full"
-          style={{ background: "linear-gradient(90deg, #8F87F1 0%, rgba(143,135,241,0.18) 100%)" }}
-        />
-        <CardContent className="space-y-4 p-6">
+        <CardContent className="space-y-5 p-6">
           <div className="space-y-1">
             <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-400">Übersicht</p>
             <p className="text-sm text-slate-500">Verfolge Status, Client-Zuordnung und Einstieg in jedes Projekt.</p>
           </div>
           <Input
-            className="border-slate-200 bg-slate-50/70"
             onChange={(event) => {
               setSearch(event.target.value);
               setPage(1);
@@ -97,7 +91,7 @@ export function ProjectsPage() {
                     </TableCell>
                     <TableCell className="text-slate-500">{formatDate(project.created_at)}</TableCell>
                     <TableCell className="text-right">
-                      <Button asChild className="border-[#8F87F1]/20 text-[#6E65D8] hover:bg-[#8F87F1]/10" size="sm" variant="outline">
+                      <Button asChild size="sm" variant="outline">
                         <Link to={`/admin/projects/${project.id}`}>Details</Link>
                       </Button>
                     </TableCell>
@@ -112,7 +106,6 @@ export function ProjectsPage() {
             <p className="text-sm text-slate-500">{buildPaginationLabel(currentPage, totalPages)}</p>
             <div className="flex gap-2">
               <Button
-                className="border-slate-200 bg-white hover:bg-slate-50"
                 disabled={currentPage === 1}
                 onClick={() => setPage((value) => Math.max(value - 1, 1))}
                 variant="outline"
@@ -120,7 +113,6 @@ export function ProjectsPage() {
                 Zurück
               </Button>
               <Button
-                className="border-slate-200 bg-white hover:bg-slate-50"
                 disabled={currentPage >= totalPages}
                 onClick={() => setPage((value) => Math.min(value + 1, totalPages))}
                 variant="outline"

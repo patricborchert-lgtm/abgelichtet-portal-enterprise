@@ -4,9 +4,9 @@ import { LogOut, UserCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { getUnreadNotificationCount, listNotifications, markNotificationRead } from "@/api/notifications";
-import { Button } from "@/components/ui/button";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { NotificationDropdown } from "@/components/notifications/NotificationDropdown";
+import { PremiumButton } from "@/components/ui/PremiumButton";
 import { useAuth } from "@/hooks/useAuth";
 import { getErrorMessage } from "@/lib/errors";
 import type { Notification } from "@/types/app";
@@ -74,9 +74,9 @@ export function Topbar() {
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(246,244,255,0.96)_100%)] px-6 py-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] backdrop-blur md:flex-row md:items-center md:justify-between">
+    <div className="premium-card flex flex-col gap-4 !rounded-[14px] !p-5 md:flex-row md:items-center md:justify-between">
       <div>
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">abgelichtet.ch</p>
+        <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-400">abgelichtet.ch</p>
         <p className="text-lg font-semibold text-slate-950">
           {profile?.role === "admin" ? "Admin-Bereich" : "Kundenbereich"}
         </p>
@@ -96,14 +96,14 @@ export function Topbar() {
             />
           ) : null}
         </div>
-        <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm shadow-[0_8px_20px_rgba(15,23,42,0.04)]">
-          <UserCircle2 className="h-4 w-4 text-[#6E65D8]" />
+        <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm">
+          <UserCircle2 className="h-4 w-4 text-violet-600" />
           <span className="font-medium text-slate-800">{user?.email}</span>
         </div>
-        <Button className="border-slate-200 bg-white hover:bg-slate-50" onClick={() => void handleLogout()} variant="outline">
+        <PremiumButton onClick={() => void handleLogout()} variant="secondary">
           <LogOut className="h-4 w-4" />
           Ausloggen
-        </Button>
+        </PremiumButton>
       </div>
     </div>
   );

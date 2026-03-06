@@ -96,14 +96,7 @@ export function FileUploadCard({ disabled = false, onUpload }: FileUploadCardPro
   }
 
   return (
-    <Card
-      className="overflow-hidden border-white/70 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
-      style={{ borderRadius: 16 }}
-    >
-      <div
-        className="h-1.5 w-full"
-        style={{ background: "linear-gradient(90deg, #8F87F1 0%, rgba(143,135,241,0.18) 100%)" }}
-      />
+    <Card className="overflow-hidden">
       <CardHeader className="pb-3">
         <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-400">Dateien</p>
         <CardTitle className="text-2xl text-slate-950">Datei-Upload</CardTitle>
@@ -135,7 +128,7 @@ export function FileUploadCard({ disabled = false, onUpload }: FileUploadCardPro
         <div className="space-y-2">
           <Label>Dateiordner</Label>
           <Select onValueChange={(value) => setFolder(value as ProjectFileFolderKey)} value={folder}>
-            <SelectTrigger className="border-slate-200 bg-slate-50/70">
+            <SelectTrigger>
               <SelectValue placeholder="Ordner wählen" />
             </SelectTrigger>
             <SelectContent>
@@ -150,7 +143,6 @@ export function FileUploadCard({ disabled = false, onUpload }: FileUploadCardPro
         <div className="flex flex-col gap-3 md:flex-row md:items-center">
           <Button
             asChild
-            className="bg-[#8F87F1] text-white hover:bg-[#7c74e2]"
             disabled={disabled || isUploading}
           >
             <label className="cursor-pointer">

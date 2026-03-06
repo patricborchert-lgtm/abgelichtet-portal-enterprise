@@ -15,7 +15,7 @@ interface ProjectTabsProps {
 export function ProjectTabs({ activeTab, items, onChange }: ProjectTabsProps) {
   return (
     <div className="overflow-x-auto">
-      <div className="inline-flex min-w-full rounded-2xl border border-white/70 bg-white/90 p-1 shadow-[0_16px_40px_rgba(15,23,42,0.06)]">
+      <div className="inline-flex min-w-full rounded-xl border border-slate-200/70 bg-white/90 p-1.5 shadow-sm">
         {items.map((item) => {
           const isActive = item.key === activeTab;
 
@@ -23,9 +23,9 @@ export function ProjectTabs({ activeTab, items, onChange }: ProjectTabsProps) {
             <button
               key={item.key}
               className={cn(
-                "flex min-w-[140px] items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium transition-all",
+                "flex min-w-[140px] items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-medium transition-all duration-200",
                 isActive
-                  ? "bg-[linear-gradient(135deg,#8F87F1_0%,#A9A1FF_100%)] text-white shadow-[0_12px_26px_rgba(143,135,241,0.28)]"
+                  ? "bg-violet-50 text-violet-700 shadow-sm ring-1 ring-violet-200/60"
                   : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
               )}
               onClick={() => onChange(item.key)}
@@ -36,7 +36,7 @@ export function ProjectTabs({ activeTab, items, onChange }: ProjectTabsProps) {
                 <span
                   className={cn(
                     "inline-flex min-w-6 items-center justify-center rounded-full px-1.5 py-0.5 text-xs",
-                    isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600",
+                    isActive ? "bg-violet-100 text-violet-700" : "bg-slate-100 text-slate-600",
                   )}
                 >
                   {item.badge}
