@@ -4,6 +4,7 @@ import { LogOut, UserCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { getUnreadNotificationCount, listNotifications, markNotificationRead } from "@/api/notifications";
+import { QuickCreateMenu } from "@/components/layout/QuickCreateMenu";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { NotificationDropdown } from "@/components/notifications/NotificationDropdown";
 import { PremiumButton } from "@/components/ui/PremiumButton";
@@ -82,6 +83,7 @@ export function Topbar() {
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-3">
+        {profile?.role === "admin" ? <QuickCreateMenu /> : null}
         <div className="relative" ref={notificationRootRef}>
           <NotificationBell
             isOpen={isNotificationOpen}

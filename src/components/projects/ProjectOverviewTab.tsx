@@ -108,7 +108,11 @@ export function ProjectOverviewTab({
         </Card>
       </div>
 
-      {isAdmin ? <FileUploadCard onUpload={onUploadFile} /> : null}
+      {isAdmin ? (
+        <div className="scroll-mt-24" id="file-upload">
+          <FileUploadCard onUpload={onUploadFile} />
+        </div>
+      ) : null}
 
       <Card>
         <CardHeader className="pb-3">

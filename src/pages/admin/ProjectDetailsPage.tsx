@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { logActivity } from "@/api/activity";
@@ -44,9 +44,13 @@ import type {
   NotificationType,
   TimelineEventFormValues,
 } from "@/types/app";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 
 type ProjectDetailTab = "overview" | "timeline" | "chat" | "milestones" | "approvals";
+
+function isProjectDetailTab(value: string | null): value is ProjectDetailTab {
+  return value === "overview" || value === "timeline" || value === "chat" || value === "milestones" || value === "approvals";
+}
 
 function getProgressFromStatus(status: ProjectStatus): number {
   switch (status) {
@@ -67,10 +71,21 @@ function getProgressFromStatus(status: ProjectStatus): number {
 
 export function ProjectDetailsPage() {
   const params = useParams();
+  const [searchParams] = useSearchParams();
   const projectId = params.id ?? "";
-  const [activeTab, setActiveTab] = useState<ProjectDetailTab>("overview");
+  const [activeTab, setActiveTab] = useState<ProjectDetailTab>(() => {
+    const tabParam = searchParams.get("tab");
+    return isProjectDetailTab(tabParam) ? tabParam : "overview";
+  });
   const { isAdmin, isClient, profile, user } = useAuth();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (isProjectDetailTab(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   const projectQuery = useQuery({
     enabled: Boolean(projectId),
