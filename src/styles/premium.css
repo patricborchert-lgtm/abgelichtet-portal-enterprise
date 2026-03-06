@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    /* Soft neutral base with subtle violet radial gradients */
+    background: 
+      radial-gradient(circle at 20% 10%, rgba(139, 92, 246, 0.08), transparent 40%),
+      radial-gradient(circle at 80% 90%, rgba(99, 102, 241, 0.08), transparent 40%),
+      #f8fafc; /* Slate 50 */
+    color: #0f172a; /* Slate 900 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Improved Typography Hierarchy */
+  h1, h2, h3, h4 {
+    @apply font-semibold tracking-tight text-slate-900;
+  }
+
+  h1 { @apply text-3xl lg:text-4xl mb-6; }
+  h2 { @apply text-2xl mb-4; }
+  h3 { @apply text-xl mb-3; }
+  
+  p { @apply text-slate-500 leading-relaxed; }
+}
+
+@layer components {
+  /* Premium Card Style */
+  .premium-card {
+    @apply bg-white rounded-[16px] border border-slate-200/60 p-6;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .premium-card:hover {
+    @apply -translate-y-0.5;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Premium Inputs */
+  .premium-input {
+    @apply bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all duration-200;
+  }
+
+  /* Modern Progress Bar */
+  .premium-progress-bg {
+    @apply bg-slate-100 rounded-full overflow-hidden;
+  }
+  
+  .premium-progress-bar {
+    @apply bg-violet-500 h-full rounded-full;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
