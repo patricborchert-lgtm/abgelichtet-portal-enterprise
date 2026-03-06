@@ -106,7 +106,7 @@ export function GlobalSearchModal({ isAdmin, onOpenChange, open }: GlobalSearchM
       .slice(0, maxPerGroup)
       .map((project) => ({
         group: "projects",
-        href: isAdmin ? `/admin/projects/${project.id}` : `/project/${project.id}`,
+        href: isAdmin ? `/admin/projects/${project.id}` : `/client/projects/${project.id}`,
         id: `project:${project.id}`,
         subtitle: project.clients?.name ? `Client: ${project.clients.name}` : undefined,
         title: project.title,

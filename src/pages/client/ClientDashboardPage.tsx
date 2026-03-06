@@ -231,7 +231,7 @@ export function ClientDashboardPage() {
                           : "Noch keine Chat-Nachricht"}
                       </p>
                       <Button asChild className="w-full" size="sm">
-                        <Link to={`/project/${project.id}`}>Projekt öffnen</Link>
+                        <Link to={`/client/projects/${project.id}`}>Projekt öffnen</Link>
                       </Button>
                     </div>
                   </div>

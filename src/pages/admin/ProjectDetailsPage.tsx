@@ -20,6 +20,7 @@ import {
 import { ErrorState } from "@/components/common/ErrorState";
 import { LoadingTable } from "@/components/common/LoadingTable";
 import { StatusBadge } from "@/components/common/StatusBadge";
+import { ViewClientButton } from "@/components/client/ViewClientButton";
 import { ProjectApprovalsTab } from "@/components/projects/ProjectApprovalsTab";
 import { ProjectChatTab } from "@/components/projects/ProjectChatTab";
 import { ProjectMilestonesTab } from "@/components/projects/ProjectMilestonesTab";
@@ -51,6 +52,10 @@ import { useParams, useSearchParams } from "react-router-dom";
 
 type ProjectDetailTab = "overview" | "timeline" | "chat" | "milestones" | "approvals";
 
+interface ProjectDetailsPageProps {
+  forceClientView?: boolean;
+}
+
 function isProjectDetailTab(value: string | null): value is ProjectDetailTab {
   return value === "overview" || value === "timeline" || value === "chat" || value === "milestones" || value === "approvals";
 }
@@ -72,7 +77,7 @@ function getProgressFromStatus(status: ProjectStatus): number {
   }
 }
 
-export function ProjectDetailsPage() {
+export function ProjectDetailsPage({ forceClientView = false }: ProjectDetailsPageProps) {
   const params = useParams();
   const [searchParams] = useSearchParams();
   const projectId = params.id ?? "";
@@ -81,6 +86,9 @@ export function ProjectDetailsPage() {
     return isProjectDetailTab(tabParam) ? tabParam : "overview";
   });
   const { isAdmin, isClient, profile, user } = useAuth();
+  const isClientPreview = forceClientView && isAdmin;
+  const canManageAsAdmin = isAdmin && !isClientPreview;
+  const canUseClientView = isClient || isClientPreview;
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -129,7 +137,7 @@ export function ProjectDetailsPage() {
   });
 
   const clientOptionsQuery = useQuery({
-    enabled: isAdmin,
+    enabled: canManageAsAdmin,
     queryFn: listClientOptions,
     queryKey: ["client-options"],
   });
@@ -160,7 +168,7 @@ export function ProjectDetailsPage() {
   }
 
   function getAuthorLabel(): string {
-    if (profile?.role === "admin") {
+    if (canManageAsAdmin) {
       return "Admin";
     }
 
@@ -316,7 +324,7 @@ export function ProjectDetailsPage() {
     messagesQuery.isLoading ||
     milestonesQuery.isLoading ||
     approvalsQuery.isLoading ||
-    (isAdmin && clientOptionsQuery.isLoading);
+    (canManageAsAdmin && clientOptionsQuery.isLoading);
 
   if (isLoading) {
     return <LoadingTable />;
@@ -329,7 +337,7 @@ export function ProjectDetailsPage() {
     messagesQuery.isError ||
     milestonesQuery.isError ||
     approvalsQuery.isError ||
-    (isAdmin && clientOptionsQuery.isError) ||
+    (canManageAsAdmin && clientOptionsQuery.isError) ||
     !projectQuery.data;
 
   if (hasError) {
@@ -417,7 +425,7 @@ export function ProjectDetailsPage() {
 
   function handleQuickApprovalAction(): void {
     setActiveTab("approvals");
-    scrollToQuickActionTarget(["project-approval-request", "project-approval-decision"], "Freigabe-Bereich geöffnet.");
+    scrollToQuickActionTarget(["project-approval-request", "project-approval-list"], "Freigabe-Bereich geöffnet.");
   }
 
   async function handleSave(values: ProjectFormValues) {
@@ -643,12 +651,17 @@ export function ProjectDetailsPage() {
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusBadge status={project.status} />
-                  <ProjectQuickActions
-                    onAddComment={handleQuickCommentAction}
-                    onCreateMilestone={handleQuickMilestoneAction}
-                    onSendApproval={handleQuickApprovalAction}
-                    onUploadFile={handleQuickUploadAction}
-                  />
+                  {canManageAsAdmin ? (
+                    <>
+                      <ViewClientButton projectId={projectId} />
+                      <ProjectQuickActions
+                        onAddComment={handleQuickCommentAction}
+                        onCreateMilestone={handleQuickMilestoneAction}
+                        onSendApproval={handleQuickApprovalAction}
+                        onUploadFile={handleQuickUploadAction}
+                      />
+                    </>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -705,7 +718,7 @@ export function ProjectDetailsPage() {
           approvals={approvals}
           clientOptions={clientOptions}
           files={files}
-          isAdmin={isAdmin}
+          isAdmin={canManageAsAdmin}
           isSaving={updateMutation.isPending}
           onDeleteFile={handleDelete}
           onDownloadFile={handleDownload}
@@ -725,7 +738,7 @@ export function ProjectDetailsPage() {
 
       {activeTab === "milestones" ? (
         <ProjectMilestonesTab
-          isAdmin={isAdmin}
+          isAdmin={canManageAsAdmin}
           isCreating={createMilestoneMutation.isPending}
           isUpdating={updateMilestoneMutation.isPending}
           milestones={milestones}
@@ -737,8 +750,8 @@ export function ProjectDetailsPage() {
       {activeTab === "approvals" ? (
         <ProjectApprovalsTab
           approvals={approvals}
-          isAdmin={isAdmin}
-          isClient={isClient}
+          isAdmin={canManageAsAdmin}
+          isClient={canUseClientView}
           isDeciding={decideApprovalMutation.isPending}
           isRequesting={requestApprovalMutation.isPending}
           onDecide={handleApprovalDecision}

@@ -75,7 +75,7 @@ export function Topbar() {
     }
 
     setIsNotificationOpen(false);
-    navigate(profile?.role === "admin" ? `/admin/projects/${notification.project_id}` : `/project/${notification.project_id}`);
+    navigate(profile?.role === "admin" ? `/admin/projects/${notification.project_id}` : `/client/projects/${notification.project_id}`);
   }
 
   return (

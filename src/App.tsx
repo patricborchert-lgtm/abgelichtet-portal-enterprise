@@ -1,8 +1,9 @@
 import { ErrorBoundary } from "react-error-boundary";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
 import { AppErrorFallback } from "@/components/common/AppErrorFallback";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppShell } from "@/components/layout/AppShell";
+import { ClientLayout } from "@/components/layout/ClientLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage";
 import { ClientDetailsPage } from "@/pages/admin/ClientDetailsPage";
@@ -22,14 +23,21 @@ function AdminProjectRoute() {
   return <ProjectDetailsPage />;
 }
 
-function SharedProjectRoute() {
+function ClientProjectRoute() {
   const { isAdmin } = useAuth();
 
-  if (isAdmin) {
-    return <Navigate replace to="/admin" />;
+  return <ProjectDetailsPage forceClientView={isAdmin} />;
+}
+
+function LegacyProjectRoute() {
+  const { id } = useParams();
+  const { isAdmin } = useAuth();
+
+  if (!id) {
+    return <Navigate replace to={isAdmin ? "/admin" : "/client/dashboard"} />;
   }
 
-  return <ProjectDetailsPage />;
+  return <Navigate replace to={isAdmin ? `/admin/projects/${id}` : `/client/projects/${id}`} />;
 }
 
 export default function App() {
@@ -43,10 +51,11 @@ export default function App() {
           <Route element={<AuthCallbackPage />} path="/auth/callback" />
 
           <Route element={<ProtectedRoute />}>
-            <Route element={<AppShell />}>
+            <Route element={<ClientLayout />}>
               <Route element={<Navigate replace to="/client/dashboard" />} path="/client" />
               <Route element={<ClientDashboardPage />} path="/client/dashboard" />
-              <Route element={<SharedProjectRoute />} path="/project/:id" />
+              <Route element={<ClientProjectRoute />} path="/client/projects/:id" />
+              <Route element={<LegacyProjectRoute />} path="/project/:id" />
             </Route>
           </Route>
 
