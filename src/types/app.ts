@@ -2,6 +2,7 @@ import type { Database, Json } from "@/types/database";
 
 export type Role = Database["public"]["Tables"]["profiles"]["Row"]["role"];
 export type ProjectStatus = Database["public"]["Tables"]["projects"]["Row"]["status"];
+export type ProjectServiceType = Exclude<Database["public"]["Tables"]["projects"]["Row"]["service_type"], null>;
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Client = Database["public"]["Tables"]["clients"]["Row"];
@@ -33,6 +34,7 @@ export interface ClientFormValues {
 export interface ProjectFormValues {
   clientId: string;
   description: string;
+  serviceType?: ProjectServiceType;
   templateKey?: ProjectTemplateKey | "";
   status: ProjectStatus;
   title: string;

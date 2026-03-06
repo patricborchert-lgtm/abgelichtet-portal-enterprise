@@ -2,12 +2,13 @@ import { cn } from "@/lib/utils";
 import type { ProjectTemplate, ProjectTemplateId } from "@/lib/projectTemplates";
 
 interface ServiceSelectorProps {
+  disabled?: boolean;
   onSelect: (id: ProjectTemplateId) => void;
   selectedId: ProjectTemplateId;
   services: ProjectTemplate[];
 }
 
-export function ServiceSelector({ onSelect, selectedId, services }: ServiceSelectorProps) {
+export function ServiceSelector({ disabled = false, onSelect, selectedId, services }: ServiceSelectorProps) {
   return (
     <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
       {services.map((service) => {
@@ -16,11 +17,13 @@ export function ServiceSelector({ onSelect, selectedId, services }: ServiceSelec
         return (
           <button
             aria-pressed={isActive}
+            disabled={disabled}
             className={cn(
               "rounded-xl border p-2.5 text-left transition-all duration-200",
               isActive
                 ? "border-violet-300 bg-violet-50/70 shadow-sm"
                 : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50",
+              disabled ? "cursor-not-allowed opacity-60 hover:border-slate-200 hover:bg-white" : "",
             )}
             key={service.id}
             onClick={() => onSelect(service.id)}

@@ -10,7 +10,7 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { LoadingTable } from "@/components/common/LoadingTable";
 import { PageHeader } from "@/components/common/PageHeader";
-import { CreateProjectModal, type CreateProjectDraftPayload } from "@/components/projects/CreateProjectModal";
+import { CreateProjectModal } from "@/components/projects/CreateProjectModal";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import {
   AlertDialog,
@@ -141,12 +141,6 @@ export function ClientDetailsPage() {
     }
   }
 
-  function handleDraftCreate(payload: CreateProjectDraftPayload) {
-    // Creation stays local in this step. Final persistence follows in a backend wiring step.
-    console.log("Create project draft payload", payload);
-    toast.success("Projektentwurf vorbereitet.");
-  }
-
   return (
     <div className="space-y-10">
       <PageHeader
@@ -259,7 +253,6 @@ export function ClientDetailsPage() {
 
       <CreateProjectModal
         defaultClientId={client.id}
-        onCreate={handleDraftCreate}
         onOpenChange={setIsCreateModalOpen}
         open={isCreateModalOpen}
       />

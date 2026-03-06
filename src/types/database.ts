@@ -294,6 +294,15 @@ export interface Database {
           created_at: string;
           description: string | null;
           id: string;
+          service_type:
+            | "webdesign"
+            | "seo"
+            | "fotografie"
+            | "branding"
+            | "marketing"
+            | "social_media"
+            | "video"
+            | null;
           status: "planned" | "active" | "review" | "delivered" | "archived";
           title: string;
         };
@@ -302,6 +311,15 @@ export interface Database {
           created_at?: string;
           description?: string | null;
           id?: string;
+          service_type?:
+            | "webdesign"
+            | "seo"
+            | "fotografie"
+            | "branding"
+            | "marketing"
+            | "social_media"
+            | "video"
+            | null;
           status: "planned" | "active" | "review" | "delivered" | "archived";
           title: string;
         };
@@ -310,6 +328,15 @@ export interface Database {
           created_at?: string;
           description?: string | null;
           id?: string;
+          service_type?:
+            | "webdesign"
+            | "seo"
+            | "fotografie"
+            | "branding"
+            | "marketing"
+            | "social_media"
+            | "video"
+            | null;
           status?: "planned" | "active" | "review" | "delivered" | "archived";
           title?: string;
         };

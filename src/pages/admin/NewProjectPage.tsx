@@ -10,7 +10,13 @@ import { LoadingTable } from "@/components/common/LoadingTable";
 import { PageHeader } from "@/components/common/PageHeader";
 import { ProjectForm } from "@/components/projects/ProjectForm";
 import { getErrorMessage } from "@/lib/errors";
-import type { ActivityPayload, ProjectFormValues } from "@/types/app";
+import type { ActivityPayload, ProjectFormValues, ProjectServiceType } from "@/types/app";
+
+const TEMPLATE_SERVICE_MAP: Record<Exclude<ProjectFormValues["templateKey"], "" | undefined>, ProjectServiceType> = {
+  photography: "fotografie",
+  seo: "seo",
+  website: "webdesign",
+};
 
 export function NewProjectPage() {
   const navigate = useNavigate();
@@ -65,7 +71,10 @@ export function NewProjectPage() {
 
   async function handleSubmit(values: ProjectFormValues) {
     try {
-      const project = await mutation.mutateAsync(values);
+      const project = await mutation.mutateAsync({
+        ...values,
+        serviceType: values.templateKey ? TEMPLATE_SERVICE_MAP[values.templateKey] : undefined,
+      });
 
       logActivitySafely({
         action: "project_created",
@@ -73,6 +82,7 @@ export function NewProjectPage() {
         entityType: "project",
         metadata: {
           client_id: project.client_id,
+          service_type: project.service_type,
           status: project.status,
         },
       });

@@ -1,11 +1,6 @@
-export type ProjectTemplateId =
-  | "webdesign"
-  | "seo"
-  | "fotografie"
-  | "branding"
-  | "marketing"
-  | "social_media"
-  | "video";
+import type { ProjectServiceType } from "@/types/app";
+
+export type ProjectTemplateId = ProjectServiceType;
 
 export interface ProjectTemplate {
   id: ProjectTemplateId;

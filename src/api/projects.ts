@@ -42,6 +42,7 @@ export async function createProject(values: ProjectFormValues): Promise<Project>
     .insert({
       client_id: values.clientId,
       description: values.description || null,
+      service_type: values.serviceType ?? null,
       status: values.status,
       title: values.title,
     })
@@ -57,6 +58,7 @@ export async function updateProject(projectId: string, values: ProjectFormValues
     .update({
       client_id: values.clientId,
       description: values.description || null,
+      ...(values.serviceType === undefined ? {} : { service_type: values.serviceType }),
       status: values.status,
       title: values.title,
     })

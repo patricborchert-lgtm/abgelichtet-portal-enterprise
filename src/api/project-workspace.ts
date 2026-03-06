@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { assertSuccess } from "@/lib/errors";
+import { getProjectTemplateById } from "@/lib/projectTemplates";
 import type {
   Approval,
   ApprovalRequestValues,
@@ -8,22 +9,15 @@ import type {
   MilestoneFormValues,
   MilestoneStatus,
   ProjectTemplateKey,
+  ProjectServiceType,
   TimelineEvent,
   TimelineEventFormValues,
 } from "@/types/app";
 
-const PROJECT_MILESTONE_TEMPLATES: Record<ProjectTemplateKey, string[]> = {
-  photography: ["Briefing", "Shooting", "Vorauswahl", "Bildbearbeitung", "Abnahme", "Lieferung"],
-  seo: ["Analyse", "Keyword-Strategie", "OnPage Optimierung", "Content", "Monitoring", "Reporting"],
-  website: [
-    "Briefing erhalten",
-    "Struktur & Konzept",
-    "Design-Entwurf",
-    "Umsetzung",
-    "Inhalte einpflegen",
-    "Abnahme",
-    "Livegang",
-  ],
+const LEGACY_TEMPLATE_TO_SERVICE: Record<ProjectTemplateKey, ProjectServiceType> = {
+  photography: "fotografie",
+  seo: "seo",
+  website: "webdesign",
 };
 
 export async function listProjectMilestones(projectId: string): Promise<Milestone[]> {
@@ -52,8 +46,8 @@ export async function createProjectMilestone(projectId: string, values: Mileston
   return assertSuccess(result, "Meilenstein konnte nicht erstellt werden.");
 }
 
-export async function createProjectMilestoneTemplate(projectId: string, templateKey: ProjectTemplateKey): Promise<Milestone[]> {
-  const milestones = PROJECT_MILESTONE_TEMPLATES[templateKey].map((title, index) => ({
+export async function createProjectMilestones(projectId: string, titles: string[]): Promise<Milestone[]> {
+  const milestones = titles.map((title, index) => ({
     project_id: projectId,
     sort_order: index,
     title,
@@ -61,6 +55,23 @@ export async function createProjectMilestoneTemplate(projectId: string, template
 
   const result = await supabase.from("milestones").insert(milestones).select("*");
   return assertSuccess(result, "Standard-Meilensteine konnten nicht erstellt werden.");
+}
+
+export async function createProjectMilestonesForService(
+  projectId: string,
+  serviceType: ProjectServiceType,
+): Promise<Milestone[]> {
+  const template = getProjectTemplateById(serviceType);
+
+  if (!template) {
+    throw new Error("Unbekannter Service-Typ für Meilenstein-Vorlage.");
+  }
+
+  return createProjectMilestones(projectId, template.defaultMilestones);
+}
+
+export async function createProjectMilestoneTemplate(projectId: string, templateKey: ProjectTemplateKey): Promise<Milestone[]> {
+  return createProjectMilestonesForService(projectId, LEGACY_TEMPLATE_TO_SERVICE[templateKey]);
 }
 
 export async function updateProjectMilestone(
