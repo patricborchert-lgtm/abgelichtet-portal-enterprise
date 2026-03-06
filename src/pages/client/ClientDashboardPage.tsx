@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { listRecentActivity } from "@/api/activity";
 import { getProjectWorkspaceSummary } from "@/api/dashboard";
 import { listMyProjects } from "@/api/projects";
+import { ActivityFeed } from "@/components/activity/ActivityFeed";
 import { EmptyState } from "@/components/common/EmptyState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { LoadingTable } from "@/components/common/LoadingTable";
@@ -248,23 +249,12 @@ export function ClientDashboardPage() {
             <p className="text-sm font-medium text-slate-500">Aktivität</p>
             <CardTitle className="text-2xl text-slate-950">Letzte Aktivitäten</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {activity.length === 0 ? (
-              <EmptyState description="Noch keine Aktivitäten sichtbar." title="Keine Aktivitäten" />
-            ) : (
-              activity.map((entry) => (
-                <div
-                  className="rounded-2xl border border-slate-200/80 bg-[linear-gradient(180deg,rgba(143,135,241,0.04)_0%,rgba(255,255,255,1)_45%)] p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)]"
-                  key={entry.id}
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="font-medium text-slate-950">{entry.action}</p>
-                    <p className="text-xs text-slate-400">{formatDate(entry.created_at)}</p>
-                  </div>
-                  <p className="mt-2 text-sm text-slate-500">Dein Projekt wurde aktualisiert.</p>
-                </div>
-              ))
-            )}
+          <CardContent>
+            <ActivityFeed
+              emptyDescription="Noch keine Aktivitäten sichtbar."
+              emptyTitle="Keine Aktivitäten"
+              events={activity}
+            />
           </CardContent>
         </Card>
       </div>
