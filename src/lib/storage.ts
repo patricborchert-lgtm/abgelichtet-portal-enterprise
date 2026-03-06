@@ -23,7 +23,14 @@ export function buildStoragePath(
   projectId: string,
   folder: ProjectFileFolderKey,
   filename: string,
+  subfolder?: string,
 ): string {
+  const sanitizedSubfolder = subfolder ? sanitizeFilename(subfolder).replace(/\./g, "-") : "";
+
+  if (sanitizedSubfolder) {
+    return `${clientId}/${projectId}/${folder}/${sanitizedSubfolder}/${Date.now()}-${sanitizeFilename(filename)}`;
+  }
+
   return `${clientId}/${projectId}/${folder}/${Date.now()}-${sanitizeFilename(filename)}`;
 }
 
@@ -42,6 +49,16 @@ export function getProjectFileGroup(storagePath: string): ProjectFileFolderKey |
   const folder = parts[2];
 
   return PROJECT_FILE_FOLDERS.some((entry) => entry.value === folder) ? (folder as ProjectFileFolderKey) : LEGACY_PROJECT_FILE_GROUP.value;
+}
+
+export function getProjectFileSubfolder(storagePath: string): string | null {
+  const parts = storagePath.split("/");
+
+  if (parts.length >= 5) {
+    return parts[3] ?? null;
+  }
+
+  return null;
 }
 
 export function persistImpersonationSession(payload: StoredImpersonationSession): void {

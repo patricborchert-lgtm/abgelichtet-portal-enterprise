@@ -27,9 +27,10 @@ export async function uploadProjectFile(options: {
   file: File;
   folder: ProjectFileFolderKey;
   projectId: string;
+  subfolder?: string;
   userId: string;
 }): Promise<ProjectFile> {
-  const storagePath = buildStoragePath(options.clientId, options.projectId, options.folder, options.file.name);
+  const storagePath = buildStoragePath(options.clientId, options.projectId, options.folder, options.file.name, options.subfolder);
 
   const uploadResult = await supabase.storage.from(STORAGE_BUCKET).upload(storagePath, options.file, {
     cacheControl: "3600",

@@ -1,27 +1,15 @@
-import { Download, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { EmptyState } from "@/components/common/EmptyState";
+import { FileBrowser } from "@/components/files/FileBrowser";
+import { FileRequestList } from "@/components/files/FileRequestList";
+import type { FileRequestStatus, ProjectFileRequest } from "@/components/files/fileRequestTypes";
 import { StatusBadge } from "@/components/common/StatusBadge";
-import {
-  AlertDialog,
-  AlertDialogActionButton,
-  AlertDialogCancelButton,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileUploadCard } from "@/components/files/FileUploadCard";
 import { ProjectForm } from "@/components/projects/ProjectForm";
-import { LEGACY_PROJECT_FILE_GROUP, PROJECT_FILE_FOLDERS } from "@/lib/constants";
-import { getProjectFileGroup } from "@/lib/storage";
-import { formatBytes, formatDate } from "@/lib/utils";
-import type { Client, ProjectFile, ProjectFileFolderKey, ProjectFormValues } from "@/types/app";
+import { getDefaultFileRequests, getProjectFoldersForService } from "@/lib/projectFileStructure";
+import { formatDate } from "@/lib/utils";
 import type { ProjectWithClient } from "@/api/projects";
+import type { Client, ProjectFile, ProjectFileFolderKey, ProjectFormValues } from "@/types/app";
 
 interface ProjectOverviewTabProps {
   clientOptions: Client[];
@@ -31,8 +19,16 @@ interface ProjectOverviewTabProps {
   onDeleteFile: (file: ProjectFile) => Promise<void>;
   onDownloadFile: (file: ProjectFile) => Promise<void>;
   onSave: (values: ProjectFormValues) => Promise<void>;
-  onUploadFile: (file: File, folder: ProjectFileFolderKey) => Promise<void>;
+  onUploadFile: (file: File, folder: ProjectFileFolderKey, subfolder?: string) => Promise<void>;
   project: ProjectWithClient;
+}
+
+function createRequestId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
 export function ProjectOverviewTab({
@@ -46,13 +42,104 @@ export function ProjectOverviewTab({
   onUploadFile,
   project,
 }: ProjectOverviewTabProps) {
-  const fileGroups = [...PROJECT_FILE_FOLDERS, LEGACY_PROJECT_FILE_GROUP]
-    .map((group) => ({
-      files: files.filter((file) => getProjectFileGroup(file.storage_path) === group.value),
-      label: group.label,
-      value: group.value,
-    }))
-    .filter((group) => group.files.length > 0);
+  const isClient = !isAdmin;
+  const folders = useMemo(() => getProjectFoldersForService(project.service_type), [project.service_type]);
+  const requestsStorageKey = `project-file-requests:${project.id}`;
+  const [fileRequests, setFileRequests] = useState<ProjectFileRequest[]>([]);
+  const [hasInitializedRequests, setHasInitializedRequests] = useState(false);
+
+  useEffect(() => {
+    const raw = window.localStorage.getItem(requestsStorageKey);
+
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw) as ProjectFileRequest[];
+        setFileRequests(parsed);
+        setHasInitializedRequests(true);
+        return;
+      } catch {
+        window.localStorage.removeItem(requestsStorageKey);
+      }
+    }
+
+    const defaults = getDefaultFileRequests(project.service_type).map((entry) => ({
+      createdAt: new Date().toISOString(),
+      description: entry.description,
+      folderId: entry.folderId,
+      id: createRequestId(),
+      status: "pending" as const,
+      title: entry.title,
+      uploadedAt: null,
+    }));
+
+    setFileRequests(defaults);
+    setHasInitializedRequests(true);
+  }, [project.service_type, requestsStorageKey]);
+
+  useEffect(() => {
+    if (!hasInitializedRequests) {
+      return;
+    }
+
+    window.localStorage.setItem(requestsStorageKey, JSON.stringify(fileRequests));
+  }, [fileRequests, hasInitializedRequests, requestsStorageKey]);
+
+  function handleCreateRequest(payload: { description: string; folderId: string; title: string }) {
+    setFileRequests((current) => [
+      {
+        createdAt: new Date().toISOString(),
+        description: payload.description,
+        folderId: payload.folderId,
+        id: createRequestId(),
+        status: "pending",
+        title: payload.title,
+        uploadedAt: null,
+      },
+      ...current,
+    ]);
+  }
+
+  function handleRequestStatusChange(requestId: string, status: FileRequestStatus) {
+    setFileRequests((current) =>
+      current.map((request) =>
+        request.id === requestId
+          ? {
+              ...request,
+              status,
+              uploadedAt: status === "uploaded" || status === "approved" ? request.uploadedAt ?? new Date().toISOString() : request.uploadedAt,
+            }
+          : request,
+      ),
+    );
+  }
+
+  async function handleUploadForRequest(requestId: string, file: File) {
+    const request = fileRequests.find((entry) => entry.id === requestId);
+
+    if (!request) {
+      return;
+    }
+
+    const folder = folders.find((entry) => entry.id === request.folderId) ?? folders[0];
+
+    if (!folder) {
+      return;
+    }
+
+    await onUploadFile(file, folder.storageFolder, folder.id);
+
+    setFileRequests((current) =>
+      current.map((entry) =>
+        entry.id === requestId
+          ? {
+              ...entry,
+              status: "uploaded",
+              uploadedAt: new Date().toISOString(),
+            }
+          : entry,
+      ),
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -108,88 +195,44 @@ export function ProjectOverviewTab({
         </Card>
       </div>
 
-      {isAdmin ? (
-        <div className="scroll-mt-24" id="file-upload">
-          <FileUploadCard onUpload={onUploadFile} />
-        </div>
-      ) : null}
+      <Card className="overflow-hidden" id="file-upload">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-2xl text-slate-950">Datei Workspace</CardTitle>
+          <CardDescription>Strukturierte Projektordner für Admins und Kunden mit klaren Upload-Bereichen.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <FileBrowser
+            files={files}
+            isAdmin={isAdmin}
+            onDeleteFile={onDeleteFile}
+            onDownloadFile={onDownloadFile}
+            onUploadFile={onUploadFile}
+            project={project}
+          />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-2xl text-slate-950">Dateien</CardTitle>
+          <CardTitle className="text-2xl text-slate-950">Benötigte Dateien</CardTitle>
+          <CardDescription>Admins erstellen Dateianfragen, Kunden laden zielgerichtet die fehlenden Unterlagen hoch.</CardDescription>
         </CardHeader>
         <CardContent>
-          {files.length === 0 ? (
-            <EmptyState description="Zu diesem Projekt wurden noch keine Dateien hochgeladen." title="Keine Dateien" />
-          ) : (
-            <div className="space-y-6">
-              {fileGroups.map((group) => (
-                <div key={group.value} className="space-y-3">
-                  <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-[linear-gradient(180deg,rgba(143,135,241,0.04)_0%,rgba(255,255,255,1)_55%)] px-4 py-3">
-                    <div>
-                      <h3 className="text-base font-semibold text-slate-950">{group.label}</h3>
-                      <p className="text-sm text-slate-500">{group.files.length} Datei{group.files.length === 1 ? "" : "en"}</p>
-                    </div>
-                  </div>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Dateiname</TableHead>
-                        <TableHead>Typ</TableHead>
-                        <TableHead>Größe</TableHead>
-                        <TableHead>Erstellt</TableHead>
-                        <TableHead className="text-right">Aktionen</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {group.files.map((file) => (
-                        <TableRow key={file.id}>
-                          <TableCell className="font-medium">{file.filename}</TableCell>
-                          <TableCell>{file.mime_type ?? "unbekannt"}</TableCell>
-                          <TableCell>{formatBytes(file.size)}</TableCell>
-                          <TableCell>{formatDate(file.created_at)}</TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                              <Button onClick={() => void onDownloadFile(file)} size="sm" variant="outline">
-                                <Download className="h-4 w-4" />
-                                Download
-                              </Button>
-                              {isAdmin ? (
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button size="sm" variant="destructive">
-                                      <Trash2 className="h-4 w-4" />
-                                      Löschen
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Datei löschen</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        Die Datei wird aus Storage und Metadaten-Tabelle entfernt.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancelButton>Abbrechen</AlertDialogCancelButton>
-                                      <AlertDialogActionButton onClick={() => void onDeleteFile(file)}>
-                                        Löschen
-                                      </AlertDialogActionButton>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              ) : null}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ))}
-            </div>
-          )}
+          <FileRequestList
+            folders={folders}
+            isAdmin={isAdmin}
+            isClient={isClient}
+            onCreateRequest={handleCreateRequest}
+            onStatusChange={handleRequestStatusChange}
+            onUploadForRequest={handleUploadForRequest}
+            requests={fileRequests}
+          />
         </CardContent>
       </Card>
+
+      {!isAdmin && files.length === 0 ? (
+        <EmptyState description="Sobald Dateien angefordert oder hochgeladen wurden, erscheinen sie im Datei Workspace." title="Noch keine Dateien" />
+      ) : null}
     </div>
   );
 }

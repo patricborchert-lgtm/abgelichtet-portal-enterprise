@@ -418,7 +418,7 @@ export function ProjectDetailsPage() {
     }
   }
 
-  async function handleUpload(file: File, folder: ProjectFileFolderKey) {
+  async function handleUpload(file: File, folder: ProjectFileFolderKey, subfolder?: string) {
     if (!user) {
       throw new Error("Keine aktive Session.");
     }
@@ -428,6 +428,7 @@ export function ProjectDetailsPage() {
       file,
       folder,
       projectId,
+      subfolder,
       userId: user.id,
     });
 
@@ -438,6 +439,7 @@ export function ProjectDetailsPage() {
       metadata: {
         filename: uploaded.filename,
         folder,
+        subfolder: subfolder ?? null,
         project_id: projectId,
       },
     });
