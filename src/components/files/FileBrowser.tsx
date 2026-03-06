@@ -5,9 +5,10 @@ import { FileUploadDropzone } from "@/components/files/FileUploadDropzone";
 import { FolderList } from "@/components/files/FolderList";
 import { getProjectFoldersForService, resolveProjectFolderId } from "@/lib/projectFileStructure";
 import type { ProjectWithClient } from "@/api/projects";
-import type { ProjectFile, ProjectFileFolderKey } from "@/types/app";
+import type { Approval, ProjectFile, ProjectFileFolderKey } from "@/types/app";
 
 interface FileBrowserProps {
+  approvals: Approval[];
   files: ProjectFile[];
   isAdmin: boolean;
   onDeleteFile: (file: ProjectFile) => Promise<void>;
@@ -18,6 +19,7 @@ interface FileBrowserProps {
 }
 
 export function FileBrowser({
+  approvals,
   files,
   isAdmin,
   onDeleteFile,
@@ -58,6 +60,40 @@ export function FileBrowser({
   );
 
   const activeFolder = folders.find((folder) => folder.id === activeFolderId) ?? folders[0];
+  const approvalStatusByFileId = useMemo(() => {
+    function normalize(value: string): string {
+      return value.trim().toLowerCase();
+    }
+
+    function removeExtension(filename: string): string {
+      const index = filename.lastIndexOf(".");
+      return index > 0 ? filename.slice(0, index) : filename;
+    }
+
+    const map: Record<string, { label: string; status: "pending" | "approved" | "changes_requested" }> = {};
+
+    for (const file of files) {
+      const filenameBase = normalize(removeExtension(file.filename));
+      const matchedApproval = approvals.find((approval) => {
+        const label = normalize(approval.step_label ?? "");
+
+        if (!label) {
+          return false;
+        }
+
+        return filenameBase.includes(label) || label.includes(filenameBase);
+      });
+
+      if (matchedApproval) {
+        map[file.id] = {
+          label: matchedApproval.step_label ?? "Deliverable",
+          status: matchedApproval.status,
+        };
+      }
+    }
+
+    return map;
+  }, [approvals, files]);
 
   async function handleFolderUpload(file: File) {
     if (!activeFolder) {
@@ -81,6 +117,7 @@ export function FileBrowser({
       ) : null}
 
       <FileGrid
+        approvalStatusByFileId={approvalStatusByFileId}
         files={activeFiles}
         isAdmin={isAdmin}
         onDelete={onDeleteFile}

@@ -1,4 +1,5 @@
 import { Loader2 } from "lucide-react";
+import { formatRelativeActivityTime } from "@/lib/activityEventFormatter";
 import { formatDate } from "@/lib/utils";
 import type { Notification } from "@/types/app";
 
@@ -46,10 +47,11 @@ export function NotificationDropdown({ isLoading, notifications, onNotificationC
                 <p className="text-xs font-medium uppercase tracking-[0.14em] text-[#6E65D8]">
                   {NOTIFICATION_TYPE_LABELS[notification.type]}
                 </p>
-                <p className="text-xs text-slate-400">{formatDate(notification.created_at)}</p>
+                <p className="text-xs text-slate-400">{formatRelativeActivityTime(notification.created_at)}</p>
               </div>
               <p className="mt-1 text-sm font-medium text-slate-900">{notification.title}</p>
               <p className="mt-1 line-clamp-2 text-sm text-slate-600">{notification.message}</p>
+              <p className="mt-1 text-[11px] text-slate-400">{formatDate(notification.created_at)}</p>
             </button>
           ))}
         </div>

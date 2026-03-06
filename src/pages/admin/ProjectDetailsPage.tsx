@@ -28,7 +28,9 @@ import { ProjectQuickActions } from "@/components/projects/ProjectQuickActions";
 import { ProjectTabs } from "@/components/projects/ProjectTabs";
 import { ProjectTimelineTab } from "@/components/projects/ProjectTimelineTab";
 import { useAuth } from "@/hooks/useAuth";
+import { sendEmailNotification } from "@/lib/emailService";
 import { getErrorMessage } from "@/lib/errors";
+import { createNotification } from "@/lib/notificationService";
 import { formatDate } from "@/lib/utils";
 import type {
   ActivityPayload,
@@ -138,23 +140,6 @@ export function ProjectDetailsPage() {
         await logActivity(payload);
       } catch {
         // Logging must never block business flows.
-      }
-    })();
-  }
-
-  function sendProjectEmailSafely(
-    type: "approval_requested" | "approved" | "changes_requested",
-    comment?: string,
-  ): void {
-    void (async () => {
-      try {
-        await sendProjectEmail({
-          comment,
-          projectId,
-          type,
-        });
-      } catch {
-        // Email delivery must never block business flows.
       }
     })();
   }
@@ -359,6 +344,31 @@ export function ProjectDetailsPage() {
   const approvals = approvalsQuery.data ?? [];
   const clientOptions = clientOptionsQuery.data ?? [];
   const progress = getProgressFromStatus(project.status);
+  const approvalLink = `${profile?.role === "admin" ? "/admin" : "/project"}/${projectId}?tab=approvals`;
+
+  function triggerApprovalSideEffects(options: {
+    message: string;
+    status: "approval_requested" | "approved" | "changes_requested";
+    title: string;
+  }): void {
+    void createNotification({
+      link: approvalLink,
+      message: options.message,
+      projectId,
+      title: options.title,
+      type: options.status,
+      userId: project.client_id,
+    });
+
+    void sendEmailNotification({
+      link: approvalLink,
+      message: options.message,
+      projectId,
+      recipient: project.clients?.email ?? "",
+      subject: options.title,
+      type: options.status,
+    });
+  }
 
   function scrollToQuickActionTarget(targetIds: string[], fallbackMessage?: string): void {
     window.setTimeout(() => {
@@ -556,15 +566,11 @@ export function ProjectDetailsPage() {
   async function handleRequestApproval(values: ApprovalRequestValues) {
     try {
       await requestApprovalMutation.mutateAsync(values);
-      sendProjectEmailSafely(
-        "approval_requested",
-        values.message ? `${values.stepLabel}: ${values.message}` : `${values.stepLabel} wurde zur Abnahme angefragt.`,
-      );
-      createProjectNotificationSafely(
-        "approval_requested",
-        `${values.stepLabel} angefragt`,
-        values.message || `${values.stepLabel} wurde zur Abnahme angefragt.`,
-      );
+      triggerApprovalSideEffects({
+        message: values.message || `${values.stepLabel} wurde zur Abnahme angefragt.`,
+        status: "approval_requested",
+        title: `Approval requested: ${values.stepLabel}`,
+      });
       await appendSupportingTimelineEvent({
         authorLabel: getAuthorLabel(),
         eventType: "approval_requested",
@@ -588,14 +594,14 @@ export function ProjectDetailsPage() {
         approvalId: pendingApproval.id,
         values,
       });
-      sendProjectEmailSafely(values.status, values.comment || undefined);
-      createProjectNotificationSafely(
-        values.status,
-        values.status === "approved"
-          ? `${pendingApproval.step_label ?? "Projekt-Step"} abgenommen`
-          : `${pendingApproval.step_label ?? "Projekt-Step"}: Änderungen angefordert`,
-        values.comment || (values.status === "approved" ? "Das Projekt wurde abgenommen." : "Es wurden Änderungen angefordert."),
-      );
+      triggerApprovalSideEffects({
+        message: values.comment || (values.status === "approved" ? "Das Deliverable wurde freigegeben." : "Es wurden Änderungen angefordert."),
+        status: values.status,
+        title:
+          values.status === "approved"
+            ? `Client approved ${pendingApproval.step_label ?? "Deliverable"}`
+            : `Client requested changes for ${pendingApproval.step_label ?? "Deliverable"}`,
+      });
       await appendSupportingTimelineEvent({
         authorLabel: getAuthorLabel(),
         eventType: values.status,
@@ -696,6 +702,7 @@ export function ProjectDetailsPage() {
 
       {activeTab === "overview" ? (
         <ProjectOverviewTab
+          approvals={approvals}
           clientOptions={clientOptions}
           files={files}
           isAdmin={isAdmin}

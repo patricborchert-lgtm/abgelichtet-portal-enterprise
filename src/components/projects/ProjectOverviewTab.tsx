@@ -9,9 +9,10 @@ import { ProjectForm } from "@/components/projects/ProjectForm";
 import { getDefaultFileRequests, getProjectFoldersForService } from "@/lib/projectFileStructure";
 import { formatDate } from "@/lib/utils";
 import type { ProjectWithClient } from "@/api/projects";
-import type { Client, ProjectFile, ProjectFileFolderKey, ProjectFormValues } from "@/types/app";
+import type { Approval, Client, ProjectFile, ProjectFileFolderKey, ProjectFormValues } from "@/types/app";
 
 interface ProjectOverviewTabProps {
+  approvals: Approval[];
   clientOptions: Client[];
   files: ProjectFile[];
   isAdmin: boolean;
@@ -32,6 +33,7 @@ function createRequestId(): string {
 }
 
 export function ProjectOverviewTab({
+  approvals,
   clientOptions,
   files,
   isAdmin,
@@ -202,6 +204,7 @@ export function ProjectOverviewTab({
         </CardHeader>
         <CardContent>
           <FileBrowser
+            approvals={approvals}
             files={files}
             isAdmin={isAdmin}
             onDeleteFile={onDeleteFile}
