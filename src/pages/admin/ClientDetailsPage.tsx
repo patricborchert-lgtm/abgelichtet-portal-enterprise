@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { generateInvite, getClientDetails, setClientActiveState, updateClient } from "@/api/clients";
@@ -9,6 +10,7 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { LoadingTable } from "@/components/common/LoadingTable";
 import { PageHeader } from "@/components/common/PageHeader";
+import { CreateProjectModal, type CreateProjectDraftPayload } from "@/components/projects/CreateProjectModal";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import {
   AlertDialog,
@@ -31,6 +33,7 @@ import { persistImpersonationSession } from "@/lib/storage";
 import type { ActivityPayload, ClientFormValues } from "@/types/app";
 
 export function ClientDetailsPage() {
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const params = useParams();
   const clientId = params.id ?? "";
   const queryClient = useQueryClient();
@@ -138,6 +141,12 @@ export function ClientDetailsPage() {
     }
   }
 
+  function handleDraftCreate(payload: CreateProjectDraftPayload) {
+    // Creation stays local in this step. Final persistence follows in a backend wiring step.
+    console.log("Create project draft payload", payload);
+    toast.success("Projektentwurf vorbereitet.");
+  }
+
   return (
     <div className="space-y-10">
       <PageHeader
@@ -149,8 +158,8 @@ export function ClientDetailsPage() {
             <Button onClick={() => void handleImpersonation()} variant="outline">
               Als Kunde ansehen
             </Button>
-            <Button asChild>
-              <Link to="/admin/projects/new">Projekt erstellen</Link>
+            <Button onClick={() => setIsCreateModalOpen(true)}>
+              Projekt erstellen
             </Button>
           </>
         }
@@ -247,6 +256,13 @@ export function ClientDetailsPage() {
           )}
         </CardContent>
       </Card>
+
+      <CreateProjectModal
+        defaultClientId={client.id}
+        onCreate={handleDraftCreate}
+        onOpenChange={setIsCreateModalOpen}
+        open={isCreateModalOpen}
+      />
     </div>
   );
 }

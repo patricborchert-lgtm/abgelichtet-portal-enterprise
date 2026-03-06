@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { listAdminProjects } from "@/api/projects";
 import { EmptyState } from "@/components/common/EmptyState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { LoadingTable } from "@/components/common/LoadingTable";
 import { PageHeader } from "@/components/common/PageHeader";
+import { CreateProjectModal, type CreateProjectDraftPayload } from "@/components/projects/CreateProjectModal";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,9 +17,16 @@ import { PAGE_SIZE } from "@/lib/constants";
 import { buildPaginationLabel, compareStrings, formatDate } from "@/lib/utils";
 
 export function ProjectsPage() {
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const projectsQuery = useQuery({ queryKey: ["projects", "admin"], queryFn: listAdminProjects });
+
+  function handleDraftCreate(payload: CreateProjectDraftPayload) {
+    // Creation stays local in this step. Final persistence follows in a backend wiring step.
+    console.log("Create project draft payload", payload);
+    toast.success("Projektentwurf vorbereitet.");
+  }
 
   if (projectsQuery.isLoading) {
     return <LoadingTable />;
@@ -42,8 +51,8 @@ export function ProjectsPage() {
     <div className="space-y-8">
       <PageHeader
         actions={
-          <Button asChild>
-            <Link to="/admin/projects/new">Projekt anlegen</Link>
+          <Button onClick={() => setIsCreateModalOpen(true)}>
+            Projekt anlegen
           </Button>
         }
         description="Behalte Projektstatus, Zuordnungen und die operative Arbeit im Blick."
@@ -123,6 +132,12 @@ export function ProjectsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <CreateProjectModal
+        onCreate={handleDraftCreate}
+        onOpenChange={setIsCreateModalOpen}
+        open={isCreateModalOpen}
+      />
     </div>
   );
 }
